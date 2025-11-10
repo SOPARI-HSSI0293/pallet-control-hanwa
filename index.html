@@ -38,10 +38,6 @@
             color: #e5e7eb;
             min-height: 100vh;
         }
-        .pallet-card {
-            background-color: #313742;
-            border-top: 4px solid #6366f1;
-        }
         .pallet-table {
             background-color: #313742;
         }
@@ -52,6 +48,10 @@
         .pallet-table tr:nth-child(even) {
             background-color: #2d333f;
         }
+        /* Kelas warna bersyarat */
+        .color-green { color: #34d399; } /* Tailwind green-400 */
+        .color-orange { color: #f97316; } /* Tailwind orange-600 */
+        .color-red { color: #f87171; } /* Tailwind red-400 */
     </style>
 </head>
 <body>
@@ -222,7 +222,7 @@
         // GANTI NILAI DI BAWAH INI DENGAN DATA SHEET ANDA YANG SEBENARNYA
         const GOOGLE_SHEET_ID = '1YiIDIa0Ysi-O0k4askOtd8Qf66KnQuJxlLMngDlqM1A'; // GANTI dengan ID Google Sheet Anda
         const SHEET_NAME = 'MASTER PALET'; // GANTI dengan Nama Sheet Anda (misalnya: Sheet1)
-        const RANGE = 'A:H'; // Tentukan kolom yang ingin diambil
+        const RANGE = 'A:H'; // Gunakan range yang cukup luas untuk mencakup semua kolom yang mungkin
 
         const GOOGLE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&range=${RANGE}`;
 
@@ -243,14 +243,7 @@
                         <span id="status-message" class="text-sm text-gray-400">Memuat data...</span>
                     </header>
 
-                    <div id="pallet-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-10">
-                        <!-- Kartu Palet akan dimasukkan di sini oleh JavaScript -->
-                        <div class="pallet-card rounded-xl p-6 shadow-md animate-pulse">
-                            <div class="h-4 bg-gray-600 rounded w-1/2 mb-4"></div>
-                            <div class="h-3 bg-gray-700 rounded mb-2"></div>
-                            <div class="h-3 bg-gray-700 rounded w-3/4"></div>
-                        </div>
-                    </div>
+                    <!-- Penghapusan section kartu individual -->
 
                     <h2 class="text-xl font-bold text-gray-300 mb-3 border-b border-gray-800 pb-2">Detail Data Palet</h2>
                     <div id="table-container" class="shadow-lg rounded-xl overflow-x-auto">
@@ -270,7 +263,6 @@
          */
         async function fetchMasterPalletData() {
             const statusMessageEl = document.getElementById('status-message');
-            const cardsContainerEl = document.getElementById('pallet-cards-container');
             const tableHeaderEl = document.querySelector('#pallet-table thead tr');
             const tableBodyEl = document.querySelector('#pallet-table tbody');
             const errorBoxEl = document.getElementById('error-box');
@@ -278,14 +270,16 @@
             if (!statusMessageEl) return; // Guard
 
             statusMessageEl.textContent = 'Memuat data...';
-            cardsContainerEl.innerHTML = ''; // Kosongkan
             errorBoxEl.classList.add('hidden');
+            tableHeaderEl.innerHTML = '';
+            tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Memuat data...</td></tr>';
 
             try {
                 const response = await fetch(GOOGLE_SHEET_URL);
                 if (!response.ok) throw new Error(`Status ${response.status}`);
                 
                 const text = await response.text();
+                // Membersihkan respon dari Google GViz
                 const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
                 const data = JSON.parse(jsonText);
                 
@@ -294,11 +288,12 @@
                 }
 
                 const parsedData = parseGVizData(data);
-                displayMasterPalletData(parsedData, statusMessageEl, cardsContainerEl, tableHeaderEl, tableBodyEl);
+                displayMasterPalletData(parsedData, statusMessageEl, tableHeaderEl, tableBodyEl);
                 
             } catch (error) {
                 console.error("Kesalahan saat mengambil data Google Sheet:", error);
                 statusMessageEl.textContent = 'Gagal memuat data.';
+                tableBodyEl.innerHTML = ''; // Kosongkan
                 errorBoxEl.textContent = `🚨 GAGAL MEMUAT DATA: ${error.message}. Pastikan ID Sheet, Nama Sheet, dan Izin akses publik sudah benar.`;
                 errorBoxEl.classList.remove('hidden');
             }
@@ -311,7 +306,8 @@
             const columns = data.table.cols.map(col => ({
                 id: col.id,
                 label: col.label || col.id 
-            }));
+            })).filter(col => col.label); // Hilangkan kolom tanpa label
+
             const rows = data.table.rows;
             const result = [];
 
@@ -319,6 +315,7 @@
                 const rowObject = {};
                 for (let i = 0; i < columns.length; i++) {
                     const colLabel = columns[i].label;
+                    // Ambil nilai yang diformat (f) jika ada, jika tidak, ambil nilai mentah (v)
                     rowObject[colLabel] = row.c[i] ? (row.c[i].f || row.c[i].v) : '';
                 }
                 result.push(rowObject);
@@ -327,85 +324,45 @@
         }
 
         /**
-         * Menampilkan data yang sudah diurai ke dalam kartu dan tabel.
+         * Menampilkan data yang sudah diurai ke dalam tabel.
          */
-        function displayMasterPalletData(parsedData, statusEl, cardsEl, headerEl, bodyEl) {
+        function displayMasterPalletData(parsedData, statusEl, headerEl, bodyEl) {
             const { data, headers } = parsedData;
             
             if (data.length === 0) {
                 statusEl.textContent = "Data tidak ditemukan.";
-                cardsEl.innerHTML = '<p class="text-center col-span-full text-gray-500">Tidak ada data Master Palet yang tersedia.</p>';
                 headerEl.innerHTML = '';
-                bodyEl.innerHTML = '';
+                bodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data Master Palet yang tersedia.</td></tr>';
                 return;
             }
 
             statusEl.textContent = `${data.length} Data Palet Ditemukan`;
-            cardsEl.innerHTML = ''; 
-
-            // Rendering Kartu Palet
-            data.forEach(item => {
-                cardsEl.appendChild(createPalletCard(item));
-            });
 
             // Rendering Tabel Detail
             renderPalletTable(data, headers, headerEl, bodyEl);
         }
+
+        /**
+         * Mendapatkan kelas warna berdasarkan status dan lokasi.
+         */
+        function getRowColorClass(status, lokasi) {
+            const s = String(status).toUpperCase().trim();
+            const l = String(lokasi).toUpperCase().trim();
+
+            if (s === 'KOSONG' && l === 'AREA PALET') {
+                return 'color-green'; // Hijau
+            }
+            if (s === 'TERISI' && l === 'AREA PRODUCT') {
+                return 'color-orange'; // Jingga/Orange
+            }
+            if (s === 'TERISI' && l === 'CUSTOMER') {
+                return 'color-red'; // Merah
+            }
+            return 'text-gray-200'; // Default, warna font terang otomatis
+        }
         
         /**
-         * Membuat elemen kartu untuk setiap data Palet.
-         */
-        function createPalletCard(item) {
-            const card = document.createElement('div');
-            card.className = 'pallet-card rounded-xl shadow-xl p-6 transition duration-300 hover:shadow-2xl border-t-4 border-indigo-500';
-
-            const status = item['Status'] || 'Kosong';
-            let statusColor = 'bg-gray-600 text-gray-200';
-            if (status.toLowerCase().includes('tersedia') || status.toLowerCase().includes('kosong')) {
-                statusColor = 'bg-green-700 text-green-100';
-            } else if (status.toLowerCase().includes('dipakai') || status.toLowerCase().includes('digunakan')) {
-                statusColor = 'bg-yellow-700 text-yellow-100';
-            } else if (status.toLowerCase().includes('rusak')) {
-                statusColor = 'bg-red-700 text-red-100';
-            }
-
-            // Membangun konten kartu
-            let content = `
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-extrabold text-indigo-400 leading-tight">
-                        ${item['ID Palet'] || 'N/A'}
-                    </h3>
-                    <span class="text-sm font-semibold px-3 py-1 rounded-full ${statusColor}">
-                        ${status}
-                    </span>
-                </div>
-                <div class="space-y-2 text-gray-400">
-            `;
-
-            // Tambahkan semua field data yang relevan
-            const keys = Object.keys(item).filter(key => key !== 'ID Palet' && key !== 'Status');
-            keys.forEach(key => {
-                content += `
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="font-medium text-gray-500">${key}:</span>
-                        <span class="font-semibold text-gray-300">${item[key] || '-'}</span>
-                    </div>
-                `;
-            });
-
-            content += `
-                </div>
-                <button class="mt-4 w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700 transition duration-150 text-sm">
-                    Lihat Log Transaksi &rarr;
-                </button>
-            `;
-
-            card.innerHTML = content;
-            return card;
-        }
-
-        /**
-         * Merender data Palet ke dalam elemen tabel.
+         * Merender data Palet ke dalam elemen tabel dengan pewarnaan bersyarat.
          */
         function renderPalletTable(data, headers, headerEl, bodyEl) {
             // Render Header Tabel
@@ -421,11 +378,14 @@
             bodyEl.innerHTML = '';
             data.forEach((item, index) => {
                 const tr = document.createElement('tr');
-                tr.className = index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700'; // Darker background
+                const rowClass = getRowColorClass(item['Status'], item['Lokasi']);
+                
+                // Terapkan latar belakang baris bergantian dan kelas warna teks
+                tr.className = (index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700') + ' ' + rowClass;
                 
                 headers.forEach(header => {
                     const td = document.createElement('td');
-                    td.className = 'px-6 py-4 whitespace-nowrap text-sm';
+                    td.className = 'px-6 py-3 whitespace-nowrap text-sm';
                     td.textContent = item[header] || '-';
                     tr.appendChild(td);
                 });
@@ -447,7 +407,7 @@
                     <div class="bg-gray-800 p-8 rounded-xl shadow-lg text-center mt-10">
                         <h2 class="text-xl font-semibold mb-2 text-gray-200">Fitur ${title}</h2>
                         <p class="text-gray-400 mb-4">${subtitle} - Halaman ini sedang dalam pengembangan.</p>
-                        <p class="text-sm text-gray-500">Saat ini hanya menu "Master Palet" yang sudah terintegrasi dengan data Google Sheet.</p>
+                        <p class="text-sm text-gray-500">Saat ini hanya menu "Master Palet" yang sudah terintegrasi dengan data Google Sheet dan menampilkan pewarnaan bersyarat.</p>
                         <button onclick="navigate('dashboard')" class="mt-6 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition">
                             Kembali ke Menu Utama
                         </button>
