@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Kontrol Palet Hanwa</title>
+    <title>Sistem Kontrol Palet Hanwa (Google Sheet API)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -26,7 +26,6 @@
         .modal {
             transition: opacity 0.3s ease-in-out;
         }
-        /* Custom scrollbar for table container */
         .table-container::-webkit-scrollbar {
             height: 8px;
         }
@@ -38,26 +37,26 @@
 </head>
 <body>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
         <div class="flex flex-col items-center">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            <p class="text-white mt-3 text-lg">Memuat...</p>
+            <p class="text-white mt-3 text-lg">Menghubungkan ke Google Sheets...</p>
         </div>
     </div>
 
     <div class="container-app mx-auto p-4 md:p-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b-2 pb-2">Kontrol Palet Hanwa (Demo)</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b-2 pb-2">Kontrol Palet Hanwa (via Google Sheet API)</h1>
 
-        <!-- Authentication Status -->
-        <div id="auth-status" class="bg-blue-100 p-3 rounded-lg text-blue-800 mb-6 flex justify-between items-center">
-            <span>Status: <span id="user-status" class="font-semibold">Memuat...</span></span>
-            <span id="user-id-display" class="text-sm font-mono bg-blue-200 px-2 py-1 rounded"></span>
+        <!-- Connection Status -->
+        <div id="auth-status" class="bg-green-100 p-3 rounded-lg text-green-800 mb-6">
+            <p>Status Koneksi: <span class="font-semibold">URL Web App terpasang. Harap pastikan Apps Script sudah di-deploy.</span></p>
+            <p class="text-xs mt-1">Sheet ID Google Sheet: 1YiIDIa0Ysi-O0k4askOtd8Qf66KnQuJxlLMngDlwaM1A</p>
         </div>
 
         <!-- Tabs -->
         <div class="flex mb-6 border-b border-gray-300">
             <button onclick="switchTab('master')" class="tab-btn p-3 font-semibold text-sm md:text-base border-b-2 border-blue-600 text-blue-600 transition duration-150 ease-in-out" id="tab-master">Master Palet</button>
-            <button onclick="switchTab('transaction')" class="tab-btn p-3 font-semibold text-sm md:text-base text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out" id="tab-transaction">Transaksi Palet</button>
+            <button onclick="switchTab('transaction')" class="tab-btn p-3 font-semibold text-sm md:text-base text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out" id="tab-transaction">Log Transaksi Palet</button>
         </div>
 
         <!-- Master Palet Tab Content -->
@@ -100,7 +99,6 @@
                             </tr>
                         </thead>
                         <tbody id="master-palet-list" class="bg-white divide-y divide-gray-200">
-                            <!-- Data will be inserted here by JavaScript -->
                             <tr><td colspan="7" class="text-center py-4 text-gray-500">Memuat data...</td></tr>
                         </tbody>
                     </table>
@@ -118,8 +116,8 @@
                         <input type="text" id="transactionPaletId" name="transactionPaletId" placeholder="ID Palet (Ex: HNW-A101)" required class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                         <select id="transactionType" name="transactionType" required class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Pilih Jenis Transaksi</option>
-                            <option value="Incoming">Masuk (Incoming)</option>
-                            <option value="Outgoing">Keluar (Outgoing)</option>
+                            <option value="Incoming">Masuk (Available)</option>
+                            <option value="Outgoing">Keluar (In Use)</option>
                         </select>
                         <input type="text" id="transactionLocation" name="transactionLocation" placeholder="Lokasi Baru (Ex: Line Produksi 1)" required class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                         <input type="text" id="transactionNotes" name="transactionNotes" placeholder="Catatan Tambahan (Opsional)" class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -145,7 +143,6 @@
                             </tr>
                         </thead>
                         <tbody id="transaction-list" class="bg-white divide-y divide-gray-200">
-                            <!-- Data will be inserted here by JavaScript -->
                             <tr><td colspan="5" class="text-center py-4 text-gray-500">Memuat data...</td></tr>
                         </tbody>
                     </table>
@@ -164,27 +161,72 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // *** FIX APPLIED HERE: Added 'doc', 'setDoc', 'updateDoc', 'addDoc', etc. to imports ***
-        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, orderBy, limit, serverTimestamp, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // *** URL WEB APP TELAH DIPERBARUI ***
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyDDp6x-07VQr3aSRqXNfWOmMEVofT-8M6NmUFhNrns0-XCeVd55SYrNC7b6qPgiLbj/exec'; 
+        
+        // Konstanta
+        const MASTER_SHEET_NAME = 'MASTER PALET';
+        const TRANSACTION_SHEET_NAME = 'Log Transaksi Palet';
+        const LOADING_OVERLAY = document.getElementById('loading-overlay');
+        let masterPaletsData = [];
 
-        // Global Variables provided by Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- FETCH UTILITY ---
+        const callWebApp = async (payload) => {
+            if (WEB_APP_URL === 'YOUR_WEB_APP_URL_HERE') {
+                // Seharusnya tidak tercapai karena sudah diganti, tapi sebagai fallback
+                throw new Error("ERROR: URL Web App belum diset.");
+            }
+            
+            const url = `${WEB_APP_URL}?type=${payload.action}`;
+            
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(payload).toString()
+            };
 
-        let app;
-        let db;
-        let auth;
-        let userId = null;
-        let isAuthReady = false;
+            // Implementasi Exponential Backoff
+            const MAX_RETRIES = 5;
+            let response = null;
+            let lastError = null;
 
-        const masterPaletCollectionPath = `artifacts/${appId}/public/data/masterPalets`;
-        const transactionCollectionPath = `artifacts/${appId}/public/data/transactions`;
+            for (let i = 0; i < MAX_RETRIES; i++) {
+                try {
+                    response = await fetch(url, options);
+                    if (response.status !== 429 && response.ok) {
+                        break; // Sukses atau error non-throttling
+                    } else if (response.status === 429) {
+                        // Throttling detected, wait and retry
+                        const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000); // 1s, 2s, 4s, 8s, 16s + jitter
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        lastError = new Error(`Request throttled (429). Retrying in ${Math.round(delay/1000)}s.`);
+                        // Continue loop for retry
+                    } else {
+                        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                    }
+                } catch (error) {
+                    lastError = error;
+                    // For network errors, wait before retrying
+                    if (i < MAX_RETRIES - 1) {
+                         const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000);
+                         await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
 
+            if (!response || !response.ok) {
+                throw lastError || new Error("Gagal terhubung ke Apps Script setelah beberapa kali coba.");
+            }
+            
+            const json = await response.json();
+            
+            if (json.status === 'error') {
+                throw new Error(json.message);
+            }
+            return json;
+        };
+        
         // Utility function to show custom modal messages
         window.showMessageModal = (message, type = 'info') => {
             const modal = document.getElementById('message-modal');
@@ -201,89 +243,11 @@
             modal.classList.remove('opacity-0', 'pointer-events-none');
         };
 
-        // --- FIREBASE INITIALIZATION & AUTHENTICATION ---
-        const initializeFirebase = async () => {
-            try {
-                // Initialize App and Services
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Authentication
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('user-status').textContent = 'Terkoneksi';
-                        document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-                        console.log(`Autentikasi selesai. User ID: ${userId}`);
-                    } else {
-                         // Sign in anonymously if no token is available or user is signed out
-                        userId = null;
-                        await signInAnonymously(auth);
-                        // The onAuthStateChanged listener will fire again with the new anonymous user
-                    }
-
-                    if (user || !initialAuthToken) {
-                        // This block ensures we only proceed after the initial auth check/sign-in
-                        isAuthReady = true;
-                        document.getElementById('loading-overlay').classList.add('hidden');
-                        startFirestoreListeners();
-                    }
-                });
-
-                // If initialAuthToken is provided, use it for custom sign-in
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                }
-
-                console.log(`Master Palet Collection Path: ${masterPaletCollectionPath}`);
-            } catch (error) {
-                console.error("Gagal inisialisasi Firebase atau autentikasi:", error);
-                document.getElementById('user-status').textContent = 'Gagal';
-                document.getElementById('loading-overlay').classList.add('hidden');
-                showMessageModal(`Gagal terhubung ke sistem. Cek konsol untuk detail error.`, 'error');
-            }
-        };
-
-        // --- FIRESTORE LISTENERS ---
-        const startFirestoreListeners = () => {
-            if (!isAuthReady || !userId) return;
-
-            // 1. Master Palet Listener
-            onSnapshot(collection(db, masterPaletCollectionPath), (snapshot) => {
-                const palets = [];
-                snapshot.forEach(doc => palets.push(doc.data()));
-                renderMasterPalets(palets);
-                console.log(`Data Master Palet diperbarui: ${palets.length}`);
-            }, (error) => {
-                console.error("Gagal mendengarkan Master Palets:", error);
-            });
-
-            // 2. Transaction Listener
-            // Note: Sorting is done client-side to avoid index requirement in Firestore
-            onSnapshot(collection(db, transactionCollectionPath), (snapshot) => {
-                let transactions = [];
-                snapshot.forEach(doc => transactions.push(doc.data()));
-
-                // Sort by timestamp (descending) client-side
-                transactions.sort((a, b) => {
-                    const timeA = a.timestamp?.seconds || 0;
-                    const timeB = b.timestamp?.seconds || 0;
-                    return timeB - timeA;
-                });
-
-                renderTransactions(transactions);
-                console.log(`Data Transaksi Palet diperbarui: ${transactions.length}`);
-            }, (error) => {
-                console.error("Gagal mendengarkan Transaksi Palet:", error);
-            });
-        };
-
         // --- RENDERING FUNCTIONS ---
         const renderMasterPalets = (palets) => {
             const list = document.getElementById('master-palet-list');
             document.getElementById('master-palet-count').textContent = palets.length;
-            list.innerHTML = ''; // Clear existing rows
+            list.innerHTML = ''; 
 
             if (palets.length === 0) {
                 list.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">Belum ada data Master Palet.</td></tr>';
@@ -292,17 +256,18 @@
 
             palets.forEach(palet => {
                 const row = document.createElement('tr');
-                const statusClass = palet.status === 'Available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-
+                // Status in G-Sheet is either 'Available' (Incoming) or 'In Use' (Outgoing)
+                const statusClass = palet.Status === 'Available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${palet.id}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${palet.type}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${palet.status}</span></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${palet.location}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${palet.capacity}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(palet.lastUpdated).toLocaleString('id-ID')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${palet.ID_Palet}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${palet.Tipe}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${palet.Status}</span></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${palet.Lokasi}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${palet.Kapasitas}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${palet.Terakhir_Diperbarui}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button onclick="window.handleDeleteMasterPalet('${palet.id}')" class="text-red-600 hover:text-red-900 ml-2">Hapus</button>
+                        <button onclick="window.handleDeleteMasterPalet('${palet.ID_Palet}')" class="text-red-600 hover:text-red-900 ml-2">Hapus</button>
                     </td>
                 `;
                 list.appendChild(row);
@@ -312,25 +277,26 @@
         const renderTransactions = (transactions) => {
             const list = document.getElementById('transaction-list');
             document.getElementById('transaction-count').textContent = transactions.length;
-            list.innerHTML = ''; // Clear existing rows
+            list.innerHTML = ''; 
 
             if (transactions.length === 0) {
-                list.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">Belum ada data Transaksi Palet.</td></tr>';
+                list.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">Belum ada data Log Transaksi Palet.</td></tr>';
                 return;
             }
 
+            // Sort: Newest first based on Timestamp (assuming the script returned it unsorted)
+            transactions.sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+
             transactions.forEach(tx => {
                 const row = document.createElement('tr');
-                const typeClass = tx.type === 'Incoming' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
-
-                const timestamp = tx.timestamp ? new Date(tx.timestamp.seconds * 1000).toLocaleString('id-ID') : 'N/A';
-
+                const typeClass = tx.Tipe_Transaksi === 'Incoming' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+                
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timestamp}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${tx.paletId}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm ${typeClass}">${tx.type}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tx.location}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title="${tx.notes || ''}">${tx.notes || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tx.Timestamp}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${tx.ID_Palet}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${typeClass}">${tx.Tipe_Transaksi}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tx.Lokasi_Baru}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title="${tx.Catatan || ''}">${tx.Catatan || '-'}</td>
                 `;
                 list.appendChild(row);
             });
@@ -339,82 +305,70 @@
         // --- MASTER PALET HANDLERS ---
         window.handleMasterPaletSubmit = async (event) => {
             event.preventDefault();
-            if (!isAuthReady || !userId) {
-                showMessageModal("Sistem belum siap. Tunggu autentikasi selesai.", 'error');
-                return;
-            }
+            LOADING_OVERLAY.classList.remove('hidden');
 
             const form = event.target;
             const formData = new FormData(form);
 
-            const newPaletId = formData.get('masterPaletId').toUpperCase().trim();
-            if (!newPaletId) {
-                showMessageModal("ID Palet tidak boleh kosong.", 'error');
-                return;
-            }
-
+            const paletId = formData.get('masterPaletId').toUpperCase().trim();
+            
             const paletData = {
-                id: newPaletId,
-                type: formData.get('masterPaletType'),
-                status: 'Available', // Default status for a new pallet
-                location: formData.get('masterPaletLocation'),
-                capacity: parseInt(formData.get('masterPaletCapacity') || 1, 10),
-                lastUpdated: new Date().toISOString(),
-                createdBy: userId,
+                ID_Palet: paletId,
+                Tipe: formData.get('masterPaletType'),
+                Lokasi: formData.get('masterPaletLocation'),
+                Kapasitas: formData.get('masterPaletCapacity'),
+                Status: 'Available', 
+                Terakhir_Diperbarui: new Date().toLocaleString('id-ID'),
+            };
+
+            const payload = {
+                action: 'addMaster',
+                data: JSON.stringify(paletData)
             };
 
             try {
-                // Use doc() from the import to create a document reference with a specific ID
-                const masterPaletRef = doc(db, masterPaletCollectionPath, newPaletId);
-
-                // Use setDoc to create/overwrite the document
-                await setDoc(masterPaletRef, paletData);
-
-                showMessageModal(`Master Palet ${newPaletId} berhasil disimpan!`, 'success');
+                const result = await callWebApp(payload);
+                showMessageModal(result.message, 'success');
                 form.reset();
+                await loadAllData(); 
             } catch (error) {
-                console.error("Gagal menyimpan Palet. Detail Error:", error);
+                console.error("Gagal menyimpan Palet:", error);
                 showMessageModal(`Gagal menyimpan Palet: ${error.message}`, 'error');
+            } finally {
+                LOADING_OVERLAY.classList.add('hidden');
             }
         };
 
         window.handleDeleteMasterPalet = async (paletId) => {
-            if (!isAuthReady || !userId) {
-                showMessageModal("Sistem belum siap.", 'error');
+            // Simple custom "confirmation" using the window.confirm
+            const confirmed = window.confirm(`Yakin ingin menghapus Master Palet ID: ${paletId}?`);
+            if (!confirmed) {
                 return;
             }
 
-            // Simple custom "confirmation" using the modal
-            const confirmed = window.prompt(`Yakin ingin menghapus Master Palet ID: ${paletId}? Ketik 'HAPUS' untuk konfirmasi.`);
-            if (confirmed !== 'HAPUS') {
-                return;
-            }
+            LOADING_OVERLAY.classList.remove('hidden');
+
+            const payload = {
+                action: 'deleteMaster',
+                ID_Palet: paletId
+            };
 
             try {
-                // Check if there are any transactions associated with this pallet ID first (optional safety check)
-                const txQuery = query(collection(db, transactionCollectionPath), where("paletId", "==", paletId), limit(1));
-                const txSnapshot = await getDocs(txQuery);
-
-                if (!txSnapshot.empty) {
-                     showMessageModal(`Palet ${paletId} tidak dapat dihapus karena memiliki riwayat transaksi.`, 'error');
-                     return;
-                }
-
-                await deleteDoc(doc(db, masterPaletCollectionPath, paletId));
-                showMessageModal(`Master Palet ${paletId} berhasil dihapus.`, 'success');
+                const result = await callWebApp(payload);
+                showMessageModal(result.message, 'success');
+                await loadAllData();
             } catch (error) {
                 console.error("Gagal menghapus Palet:", error);
                 showMessageModal(`Gagal menghapus Palet: ${error.message}`, 'error');
+            } finally {
+                LOADING_OVERLAY.classList.add('hidden');
             }
         };
 
         // --- TRANSACTION HANDLERS ---
         window.handleTransactionSubmit = async (event) => {
             event.preventDefault();
-            if (!isAuthReady || !userId) {
-                showMessageModal("Sistem belum siap. Tunggu autentikasi selesai.", 'error');
-                return;
-            }
+            LOADING_OVERLAY.classList.remove('hidden');
 
             const form = event.target;
             const formData = new FormData(form);
@@ -426,59 +380,82 @@
 
             if (!paletId || !transactionType || !newLocation) {
                 showMessageModal("Semua kolom transaksi harus diisi.", 'error');
+                LOADING_OVERLAY.classList.add('hidden');
                 return;
             }
 
             try {
-                // Use a transaction to ensure atomic update of both Master Palet and Transaction Record
-                await runTransaction(db, async (transaction) => {
-                    const masterPaletRef = doc(db, masterPaletCollectionPath, paletId);
-                    const masterPaletDoc = await transaction.get(masterPaletRef);
+                // 1. Check Palet Existence (Master Palet data must be loaded)
+                const existingPalet = masterPaletsData.find(p => p.ID_Palet === paletId);
+                if (!existingPalet) {
+                    throw new Error(`Master Palet ID ${paletId} tidak ditemukan. Harap daftarkan palet ini terlebih dahulu.`);
+                }
+                
+                // 2. Determine New Status and Data
+                const newStatus = transactionType === 'Incoming' ? 'Available' : 'In Use';
+                
+                const masterUpdateData = {
+                    ID_Palet: paletId,
+                    Lokasi: newLocation,
+                    Status: newStatus,
+                    Terakhir_Diperbarui: new Date().toLocaleString('id-ID'),
+                };
+                
+                const transactionData = {
+                    ID_Palet: paletId,
+                    Tipe_Transaksi: transactionType,
+                    Lokasi_Baru: newLocation,
+                    Catatan: notes,
+                    Timestamp: new Date().toLocaleString('id-ID'),
+                };
 
-                    if (!masterPaletDoc.exists()) {
-                        throw new Error(`Master Palet ID ${paletId} tidak ditemukan.`);
-                    }
+                // 3. Send combined action to Web App
+                const payload = {
+                    action: 'recordTransaction',
+                    masterUpdate: JSON.stringify(masterUpdateData),
+                    newTransaction: JSON.stringify(transactionData)
+                };
 
-                    const currentPaletData = masterPaletDoc.data();
-                    const newStatus = transactionType === 'Incoming' ? 'Available' : 'In Use';
-
-                    // 1. Update Master Palet
-                    const updatedPaletData = {
-                        location: newLocation,
-                        status: newStatus,
-                        lastUpdated: new Date().toISOString(),
-                    };
-                    transaction.update(masterPaletRef, updatedPaletData);
-
-                    // 2. Create Transaction Record
-                    const newTx = {
-                        paletId: paletId,
-                        type: transactionType,
-                        location: newLocation,
-                        notes: notes,
-                        timestamp: serverTimestamp(),
-                        previousLocation: currentPaletData.location,
-                        userId: userId,
-                    };
-                    const transactionCollectionRef = collection(db, transactionCollectionPath);
-                    transaction.set(doc(transactionCollectionRef), newTx); // Use set(doc()) to add a new document with auto-ID
-
-                });
+                const result = await callWebApp(payload);
 
                 showMessageModal(`Transaksi Palet ${paletId} (${transactionType}) berhasil dicatat.`, 'success');
                 form.reset();
-
+                await loadAllData(); 
+                
             } catch (error) {
                 console.error("Gagal mencatat transaksi. Detail Error:", error);
                 showMessageModal(`Gagal mencatat transaksi: ${error.message}`, 'error');
+            } finally {
+                LOADING_OVERLAY.classList.add('hidden');
             }
         };
 
 
+        // --- DATA INITIALIZATION ---
+        const loadAllData = async () => {
+            LOADING_OVERLAY.classList.remove('hidden');
+            try {
+                // 1. Fetch Master Palets
+                const masterResult = await callWebApp({ action: 'getAllData', sheetName: MASTER_SHEET_NAME });
+                masterPaletsData = masterResult.data; 
+                renderMasterPalets(masterPaletsData);
+
+                // 2. Fetch Transactions
+                const transactionResult = await callWebApp({ action: 'getAllData', sheetName: TRANSACTION_SHEET_NAME });
+                renderTransactions(transactionResult.data); // Sorting is done inside renderTransactions
+
+            } catch (error) {
+                console.error("Gagal memuat data:", error);
+                showMessageModal(`Gagal memuat data. Pastikan Apps Script sudah di-deploy dan URL sudah benar. Detail Error: ${error.message}`, 'error');
+            } finally {
+                LOADING_OVERLAY.classList.add('hidden');
+            }
+        }
+
+
         // --- UI & INITIALIZATION ---
         window.onload = () => {
-            document.getElementById('loading-overlay').classList.remove('hidden');
-            initializeFirebase();
+            loadAllData();
         };
 
         window.switchTab = (tabName) => {
