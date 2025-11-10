@@ -80,6 +80,7 @@
                         window.isAuthReady = true;
                         window.isFirestoreReady = true;
                         console.log("Autentikasi selesai. User ID:", window.userId);
+                        console.log("Master Palet Collection Path:", window.getPalletMasterCollectionRef().path); // LOG BARU
                         window.renderApp();
                         window.startListeners();
                     }
@@ -584,18 +585,20 @@
                 if (id) {
                     // Update Palet
                     const palletRef = doc(window.getPalletMasterCollectionRef(), id);
+                    console.log("Mencoba Update Palet. Path:", palletRef.path); // LOG BARU
                     await updateDoc(palletRef, palletData);
                     window.showMessage(`Palet ID ${id} berhasil diperbarui!`);
                 } else {
                     // Tambah Palet Baru
                     const newId = window.generatePalletId();
                     const palletRef = doc(window.getPalletMasterCollectionRef(), newId);
+                    console.log("Mencoba Tambah Palet. Path:", palletRef.path); // LOG BARU
                     await setDoc(palletRef, palletData);
                     window.showMessage(`Palet ID ${newId} berhasil ditambahkan!`);
                 }
                 window.closeModal('masterPaletModal');
             } catch (error) {
-                console.error("Gagal menyimpan Palet:", error);
+                console.error("Gagal menyimpan Palet. Detail Error:", error); // LOG LEBIH JELAS
                 window.showMessage("Gagal menyimpan Palet. Cek konsol untuk detail.", 'error');
             }
         };
