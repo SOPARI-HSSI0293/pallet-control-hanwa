@@ -7,54 +7,54 @@
     <!-- Memuat Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Mengatur font default dan dark mode */
+        /* Mengatur font default dan dark mode (Tema Hijau/Hitam/Putih) */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #242933; /* Warna background gelap */
-            color: #e5e7eb; /* Warna teks terang */
+            background-color: #18181b; /* Warna background gelap (mendekati hitam - Zinc 900) */
+            color: #ffffff; /* Warna teks terang (Putih) */
         }
         /* Style untuk kartu menu */
         .menu-card {
-            background-color: #313742;
+            background-color: #27272a; /* Zinc 800 */
             transition: all 0.3s ease-in-out;
             cursor: pointer;
             border: 1px solid transparent;
         }
         .menu-card:hover {
-            background-color: #3b424f;
+            background-color: #3f3f46; /* Zinc 700 */
             transform: translateY(-3px);
-            border-color: #4f46e5; /* Border ungu saat hover */
+            border-color: #22c55e; /* Border hijau (Green 500) saat hover */
         }
         .icon {
             color: #9ca3af; /* Warna ikon default (abu-abu terang) */
             transition: color 0.3s ease-in-out;
         }
         .menu-card:hover .icon {
-            color: #6366f1; /* Warna ikon ungu saat hover */
+            color: #22c55e; /* Warna ikon hijau (Green 500) saat hover */
         }
         /* Style untuk App View */
         .app-view {
-            background-color: #242933;
-            color: #e5e7eb;
+            background-color: #18181b; /* Zinc 900 */
+            color: #ffffff; /* Putih */
             min-height: 100vh;
         }
         /* Style untuk Tabel */
         .pallet-table {
-            background-color: #313742;
+            background-color: #27272a; /* Zinc 800 */
         }
         .pallet-table th {
             /* Styling header yang ditingkatkan */
-            background-color: #1f2229; /* Lebih gelap dari body */
+            background-color: #18181b; /* Zinc 900 (Lebih gelap) */
             color: #9ca3af;
-            border-bottom: 2px solid #4f46e5; /* Garis bawah ungu */
+            border-bottom: 2px solid #22c55e; /* Garis bawah hijau (Green 500) */
             position: sticky;
             top: 0;
             z-index: 10;
         }
         .pallet-table tr:nth-child(even) {
-            background-color: #2d333f;
+            background-color: #3f3f46; /* Zinc 700 */
         }
-        /* Kelas warna bersyarat */
+        /* Kelas warna bersyarat (Tetap sama) */
         .color-green { color: #34d399; } /* Tailwind green-400 */
         .color-orange { color: #f97316; } /* Tailwind orange-600 */
         .color-red { color: #f87171; } /* Tailwind red-400 */
@@ -63,12 +63,12 @@
             transition: all 0.2s;
         }
         .btn-primary:hover {
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4); /* Bayangan hijau */
         }
         /* Style untuk ID Palet Card */
         .id-card {
-            background-color: #1f2229;
-            border: 1px solid #4f46e5;
+            background-color: #18181b; /* Zinc 900 */
+            border: 1px solid #22c55e; /* Border hijau (Green 500) */
             transition: all 0.2s;
             cursor: pointer;
             /* Lebih ringkas */
@@ -76,15 +76,15 @@
             font-size: 0.875rem; /* text-sm */
         }
         .id-card.selected {
-            background-color: #4f46e5; /* Warna ungu jika terpilih */
-            color: white;
-            border-color: #6366f1;
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+            background-color: #22c55e; /* Warna hijau (Green 500) jika terpilih */
+            color: #18181b; /* Teks gelap agar kontras di atas hijau */
+            border-color: #16a34a; /* Green 600 */
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
         }
         /* Style untuk display ID yang dipilih */
         .selected-id-tag {
-            background-color: #6366f1;
-            color: white;
+            background-color: #22c55e; /* Green 500 */
+            color: #18181b; /* Teks gelap */
             padding: 0.25rem 0.5rem;
             border-radius: 0.375rem;
             font-size: 0.875rem;
@@ -197,8 +197,8 @@
                 <div class="p-6">
                     <header class="flex justify-between items-center mb-10">
                         <div class="flex items-center">
-                            <!-- Icon Palet (SVG sederhana) -->
-                            <svg class="w-8 h-8 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Icon Palet (SVG sederhana) - Diubah ke Hijau -->
+                            <svg class="w-8 h-8 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10M10 7v10M16 7v10M20 4v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h12a2 2 0 012 2z"></path>
                             </svg>
                             <h1 class="text-3xl font-bold text-gray-100 uppercase">Control Palet Hanwa</h1>
@@ -400,8 +400,9 @@
 
                 statusEl.textContent = `${data.length} Data Palet Ditemukan`;
 
+                // Diubah ke text-green-300
                 tableHeaderEl.innerHTML = headers.map(header => 
-                    `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-300">${header}</th>`
+                    `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`
                 ).join('');
 
                 tableBodyEl.innerHTML = data.map((item, index) => {
@@ -409,7 +410,8 @@
                     const lokasi = item['Lokasi'] || '';
 
                     const rowColorClass = getRowColorClass(status, lokasi);
-                    const rowBgClass = (index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700');
+                    // Diubah ke bg-zinc-800 / bg-zinc-700
+                    const rowBgClass = (index % 2 === 0 ? 'bg-zinc-800' : 'bg-zinc-700');
                     
                     return `
                         <tr class="${rowBgClass} ${rowColorClass}">
@@ -500,14 +502,17 @@
                     grandTotal += totalValue;
                 });
 
-                summaryContainerEl.innerHTML = createSummaryCard(grandTotal.toLocaleString('id-ID'), 'Total Palet Hanwa', 'text-indigo-400');
+                // Diubah ke text-green-400
+                summaryContainerEl.innerHTML = createSummaryCard(grandTotal.toLocaleString('id-ID'), 'Total Palet Hanwa', 'text-green-400');
 
+                // Diubah ke text-green-300
                 tableHeaderEl.innerHTML = headers.map(header => 
-                    `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-300">${header}</th>`
+                    `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`
                 ).join('');
 
                 tableBodyEl.innerHTML = data.map((item, index) => {
-                    const rowBgClass = (index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700');
+                    // Diubah ke bg-zinc-800 / bg-zinc-700
+                    const rowBgClass = (index % 2 === 0 ? 'bg-zinc-800' : 'bg-zinc-700');
                     return `
                         <tr class="${rowBgClass} text-gray-200">
                             ${headers.map(header => 
@@ -530,9 +535,9 @@
                 <div id="transaction-pallet-view" class="app-view p-6 max-w-4xl mx-auto">
                     ${createHeader(TRANSACTION_PALET_TITLE, 'dashboard')}
 
-                    <div class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl">
+                    <div class="bg-zinc-800 p-6 sm:p-8 rounded-xl shadow-2xl">
                         <p class="text-sm text-gray-400 mb-6">
-                            Gunakan formulir ini untuk mencatat pergerakan <span class="font-bold text-indigo-300">beberapa</span> palet sekaligus.
+                            Gunakan formulir ini untuk mencatat pergerakan <span class="font-bold text-green-300">beberapa</span> palet sekaligus.
                         </p>
 
                         <!-- Kotak Pesan Status -->
@@ -570,28 +575,28 @@
                                 <!-- Keterangan (Textarea) -->
                                 <div class="md:col-span-2">
                                     <label for="keterangan" class="block text-sm font-medium text-gray-300 mb-1">Keterangan (Opsional)</label>
-                                    <textarea id="keterangan" name="keterangan" rows="3" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                                    <textarea id="keterangan" name="keterangan" rows="3" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-green-500 focus:border-green-500"></textarea>
                                 </div>
                             </div>
 
                             <!-- Kontainer Kartu ID Palet -->
                             <div class="mt-8">
-                                <h3 class="text-lg font-bold text-gray-300 mb-3 border-b border-gray-700 pb-1">1. Pilih ID Palet Tersedia <span id="selected-count" class="text-indigo-400 text-sm font-normal">(0 Palet Dipilih)</span></h3>
+                                <h3 class="text-lg font-bold text-gray-300 mb-3 border-b border-gray-700 pb-1">1. Pilih ID Palet Tersedia <span id="selected-count" class="text-green-400 text-sm font-normal">(0 Palet Dipilih)</span></h3>
                                 <div id="pallet-id-card-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                                     <p class="text-gray-500 col-span-full" id="id-card-status">Pilih Nama Palet dan Size Palet terlebih dahulu.</p>
                                 </div>
                             </div>
                             
                             <!-- Display ID Palet yang dipilih -->
-                            <div class="mt-6 p-4 bg-gray-700 rounded-lg border border-indigo-500">
-                                <h4 class="text-sm font-semibold text-indigo-300 mb-2">2. ID Palet yang akan Diproses:</h4>
+                            <div class="mt-6 p-4 bg-gray-700 rounded-lg border border-green-500">
+                                <h4 class="text-sm font-semibold text-green-300 mb-2">2. ID Palet yang akan Diproses:</h4>
                                 <div id="selected-ids-display" class="flex flex-wrap gap-2 min-h-[2.5rem]">
                                     <span class="text-gray-400 text-sm">Belum ada palet yang dipilih.</span>
                                 </div>
                             </div>
                             
                             <div class="mt-8 pt-4 border-t border-gray-700 flex justify-end">
-                                <button type="submit" id="submit-btn" class="btn-primary bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition">
+                                <button type="submit" id="submit-btn" class="btn-primary bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition">
                                     Kirim Transaksi (<span id="submit-count">0</span> Palet)
                                 </button>
                             </div>
@@ -700,7 +705,8 @@
                 
                 const card = document.createElement('div');
                 card.id = `card-${idPalet}`;
-                card.className = `id-card rounded-lg text-center shadow-md font-mono font-semibold hover:ring-2 hover:ring-indigo-500 transition`;
+                // Diubah ke hover:ring-green-500
+                card.className = `id-card rounded-lg text-center shadow-md font-mono font-semibold hover:ring-2 hover:ring-green-500 transition`;
                 card.textContent = idPalet;
                 
                 // Tambahkan event listener untuk menoggel pilihan
@@ -770,7 +776,7 @@
                     ${label} ${required ? '<span class="text-red-500">*</span>' : ''}
                 </label>
                 <input type="${type}" id="${id}" name="${id}" ${valueAttr} ${requiredAttr} ${disabledAttr}
-                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}"
+                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-green-500 focus:border-green-500 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}"
                        placeholder="${placeholder}">
             `;
         }
@@ -788,7 +794,7 @@
                     ${label} ${required ? '<span class="text-red-500">*</span>' : ''}
                 </label>
                 <select id="${id}" name="${id}" ${requiredAttr} ${onChangeAttr}
-                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-green-500 focus:border-green-500">
                     ${createOptionHtml(options, `Pilih ${label}`)}
                 </select>
             `;
@@ -842,71 +848,46 @@
             submitBtn.textContent = `Mengirim ${selectedPalletIds.length} Transaksi...`;
             showMessage('loading', `Mengirim data untuk ${selectedPalletIds.length} palet, mohon tunggu...`);
 
-            // 1. Ambil data input dan waktu
-            const jenisTransaksi = formData.get('jenisTransaksi');
+            // --- PERUBAHAN LOGIKA PENGIRIMAN DATA ---
+
+            // 1. Ambil semua data input dari form
+            const namaPalet = formData.get('namaPalet');
+            const sizePalet = formData.get('sizePalet');
             const tanggalTransaksi = formData.get('tanggalTransaksi');
+            const jenisTransaksi = formData.get('jenisTransaksi');
             const keterangan = formData.get('keterangan') || '-';
+            
+            // 2. Gabungkan ID Palet yang dipilih menjadi satu string, dipisahkan koma
+            const idPaletString = selectedPalletIds.join(',');
+
+            // 3. (Opsional) Tambahkan info waktu dan ID unik untuk batch ini
             const now = new Date();
-            // Format jam HH:MM:SS
             const jamTransaksi = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const idTransaksiBatch = `TRX-BATCH-${crypto.randomUUID().substring(0, 8).toUpperCase()}`; 
+
+            // 4. Buat SATU objek transaksi tunggal untuk batch ini
+            // Kolom disesuaikan dengan permintaan Anda
+            const batchTransaction = {
+                // 'ID Transaksi Batch': idTransaksiBatch, // Opsional jika Anda butuh ID Unik
+                'Nama Palet': namaPalet,
+                'Size': sizePalet, // Menggunakan 'Size' sesuai permintaan (bukan 'Size Palet')
+                'Tanggal Transaksi': tanggalTransaksi,
+                'Jenis Transaksi': jenisTransaksi,
+                'ID Palet': idPaletString, // Data yang digabungkan
+                'Jumlah Palet': selectedPalletIds.length, // Tambahan info jumlah
+                'Jam Transaksi': jamTransaksi, // Tambahan info jam
+                'Keterangan': keterangan,
+            };
+
+            // 5. Siapkan array transaksi (hanya berisi satu objek)
+            const transactionsToSend = [batchTransaction];
             
-            // 2. Tentukan Status Akhir dan Lokasi Akhir berdasarkan Jenis Transaksi (Logika Baru)
-            let statusAkhir = 'N/A';
-            let lokasiAkhir = 'N/A';
-
-            switch (jenisTransaksi) {
-                case 'DIGUNAKAN PRODUKSI':
-                    statusAkhir = 'Terisi';
-                    lokasiAkhir = 'AREA PRODUCT';
-                    break;
-                case 'KELUAR HANWA':
-                    statusAkhir = 'Terisi';
-                    lokasiAkhir = 'CUSTOMER';
-                    break;
-                case 'MASUK HANWA':
-                    statusAkhir = 'Kosong';
-                    lokasiAkhir = 'AREA PALET';
-                    break;
-                default:
-                    // Fallback jika ada nilai jenisTransaksi yang tidak terduga
-                    console.warn(`Jenis Transaksi tidak terduga: ${jenisTransaksi}`);
-                    break;
-            }
-
-            // 3. Siapkan array transaksi per palet
-            const transactionsToSend = [];
+            console.log(`Satu Transaksi Batch yang akan dikirim ke sheet ${TRANSACTION_SHEET_NAME}:`, batchTransaction);
             
-            // Siapkan map untuk pencarian cepat data master (meskipun tidak dipakai di kolom baru, ini penting untuk validasi/debugging)
-            const masterDataMap = masterPalletData.reduce((acc, item) => {
-                acc[item['ID Palet']] = item;
-                return acc;
-            }, {});
-
-            for (const idPalet of selectedPalletIds) {
-                if (!masterDataMap[idPalet]) continue; 
-
-                // Membuat ID Transaksi unik
-                const idTransaksi = `TRX-${crypto.randomUUID().substring(0, 8).toUpperCase()}`; 
-                
-                // Objek Transaksi dengan kolom yang diminta (Log Transaksi Palet Batch)
-                transactionsToSend.push({
-                    'ID Transaksi': idTransaksi,
-                    'ID Palet': idPalet,
-                    'Tanggal Transaksi': tanggalTransaksi,
-                    'Jam Transaksi': jamTransaksi,
-                    'Jenis Transaksi': jenisTransaksi,
-                    'Status Akhir': statusAkhir,
-                    'Lokasi Akhir': lokasiAkhir,
-                    'Keterangan': keterangan,
-                });
-            }
-
-            console.log(`Total ${transactionsToSend.length} Transaksi yang akan dikirim ke sheet ${TRANSACTION_SHEET_NAME}:`, transactionsToSend);
-            
-            // 4. Kirim array data ke Apps Script (simulasi)
+            // 6. Kirim array data ke Apps Script
             const payload = {
                 sheetName: TRANSACTION_SHEET_NAME, // Target sheet name
-                transactions: transactionsToSend, // Array of transaction objects
+                transactions: transactionsToSend, // Array berisi SATU objek batch
                 submittedBy: userId,
                 timestamp: now.toLocaleString('id-ID'),
             };
@@ -923,10 +904,11 @@
                 // Beri penundaan sedikit untuk simulasi kiriman
                 await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-                showMessage('success', `✅ Berhasil mencatat ${transactionsToSend.length} Transaksi ke ${TRANSACTION_SHEET_NAME}!`);
+                // Pesan sukses disesuaikan
+                showMessage('success', `✅ Berhasil mencatat 1 Transaksi Batch (untuk ${selectedPalletIds.length} palet) ke ${TRANSACTION_SHEET_NAME}!`);
                 form.reset();
                 
-                // Reset Dropdown, State, dan Kartu
+                // Reset Dropdown, State, dan Kartu (Logika ini tetap sama)
                 selectedPalletIds = [];
                 updateSelectedDisplay(); 
                 document.getElementById('sizePalet').innerHTML = createOptionHtml([], 'Pilih Size Palet');
@@ -936,10 +918,11 @@
 
             } catch (error) {
                 console.error("Kesalahan saat mengirim data:", error);
-                showMessage('error', `❌ Gagal menyimpan transaksi. Pastikan Apps Script sudah disiapkan untuk menerima Array transaksi. Detail error: ${error.message}`);
+                showMessage('error', `❌ Gagal menyimpan transaksi batch. Pastikan Apps Script (sheet ${TRANSACTION_SHEET_NAME}) siap menerima data ini. Detail error: ${error.message}`);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = `Kirim Transaksi (${selectedPalletIds.length} Palet)`;
+                // Reset jumlah di tombol
+                submitBtn.textContent = `Kirim Transaksi (0 Palet)`;
             }
         }
         
@@ -950,11 +933,11 @@
              return `
                 <header class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3" id="header-${title.toLowerCase().replace(/\s/g, '-')}">
                     <div class="flex items-center">
-                        <button onclick="navigate('${backPage}')" class="text-gray-400 hover:text-indigo-400 transition mr-4">
+                        <button onclick="navigate('${backPage}')" class="text-gray-400 hover:text-green-400 transition mr-4">
                             <!-- Icon Home/Kembali -->
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z"></path></svg>
                         </button>
-                        <h1 class="text-2xl font-bold text-indigo-400">${title}</h1>
+                        <h1 class="text-2xl font-bold text-green-400">${title}</h1>
                     </div>
                     <!-- Menggunakan ID yang konsisten untuk pengambilan data -->
                     <span id="${getStatusMessageId(title)}" class="text-sm text-gray-400">Siap mencatat</span>
@@ -967,7 +950,7 @@
          */
         function createSummaryCard(value, title, colorClass) {
             return `
-                <div class="bg-gray-800 p-5 rounded-xl shadow-xl border-t-4 border-indigo-500">
+                <div class="bg-zinc-800 p-5 rounded-xl shadow-xl border-t-4 border-green-500">
                     <p class="text-sm text-gray-400 font-medium">${title}</p>
                     <p class="text-4xl font-extrabold mt-1 ${colorClass}">${value}</p>
                     <p class="text-xs text-gray-500 mt-2">Data diambil dari sheet "Ringkasan Stok Palet"</p>
@@ -980,7 +963,7 @@
          */
         function createSummaryCardPlaceholder(value, title) {
             return `
-                <div class="bg-gray-800 p-5 rounded-xl shadow-xl border-t-4 border-gray-500">
+                <div class="bg-zinc-800 p-5 rounded-xl shadow-xl border-t-4 border-gray-500">
                     <p class="text-sm text-gray-400 font-medium">${title}</p>
                     <p class="text-4xl font-extrabold mt-1 text-gray-500">${value}</p>
                     <p class="text-xs text-gray-600 mt-2">Menunggu data...</p>
@@ -993,11 +976,11 @@
             return `
                 <div class="p-6 app-view">
                     ${createHeader(title, 'dashboard')}
-                    <div class="bg-gray-800 p-8 rounded-xl shadow-lg text-center mt-10">
+                    <div class="bg-zinc-800 p-8 rounded-xl shadow-lg text-center mt-10">
                         <h2 class="text-xl font-semibold mb-2 text-gray-200">Fitur ${title}</h2>
                         <p class="text-gray-400 mb-4">${subtitle} - Halaman ini sedang dalam pengembangan.</p>
                         <p class="text-sm text-gray-500">Saat ini menu "Master Palet", "Stock Palet", dan "Transaksi Palet" sudah terintegrasi.</p>
-                        <button onclick="navigate('dashboard')" class="mt-6 bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition">
+                        <button onclick="navigate('dashboard')" class="mt-6 bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 transition">
                             Kembali ke Menu Utama
                         </button>
                     </div>
