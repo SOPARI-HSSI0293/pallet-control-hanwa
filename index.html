@@ -51,11 +51,17 @@
 
     <!-- URL Web App -->
     <script>
+        // URL Web App Anda
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyDDp6x-07VQr3aSRqXNfWOmMEVofT-8M6NmUFhNrns0-XCeVd55SYrNC7b6qPgiLbj/exec'; 
-        // Konstanta lainnya tetap sama
+        
+        // Nama Sheet
         const MASTER_SHEET_NAME = 'MASTER PALET';
         const TRANSACTION_SHEET_NAME = 'Log Transaksi Palet';
         let masterPaletsData = [];
+
+        // Inisialisasi userId (hanya untuk tampilan)
+        const dummyUserId = "HWN-USER-001";
+        const dummyUserDisplay = "HWN-USER-001";
     </script>
 
     <!-- Header / Nav Bar -->
@@ -65,7 +71,7 @@
             <h1 class="text-xl font-bold text-gray-100">CONTROL PALET HANWA</h1>
         </div>
         <div class="flex items-center space-x-4">
-            <span class="text-sm text-gray-400 hidden sm:block">User ID: heSiluTqAL...</span>
+            <span class="text-sm text-gray-400 hidden sm:block">User ID: <span id="user-id-display">...</span></span>
             <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">S</div>
         </div>
     </header>
@@ -83,28 +89,28 @@
         <!-- Dashboard View (Initial View) -->
         <div id="view-dashboard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             
-            <!-- MASTER PALET Card -->
+            <!-- MASTER PALET Card (Icon: fa-pallet) -->
             <div onclick="switchView('master-list')" class="card-dark p-6 rounded-xl text-center cursor-pointer">
-                <i class="fas fa-cube text-5xl text-blue-400 mb-3"></i>
+                <i class="fas fa-pallet text-5xl text-blue-400 mb-3"></i>
                 <h2 class="text-xl font-semibold mb-1">MASTER PALET</h2>
                 <p class="text-sm text-gray-400">Data Induk Palet</p>
             </div>
 
-            <!-- STOCK PALET Card -->
+            <!-- STOCK PALET Card (Icon: fa-warehouse) -->
             <div onclick="switchView('stock-summary')" class="card-dark p-6 rounded-xl text-center cursor-pointer">
-                <i class="fas fa-layer-group text-5xl text-blue-400 mb-3"></i>
+                <i class="fas fa-warehouse text-5xl text-blue-400 mb-3"></i>
                 <h2 class="text-xl font-semibold mb-1">STOCK PALET</h2>
                 <p class="text-sm text-gray-400">Ringkasan Stok Palet</p>
             </div>
 
-            <!-- TRANSAKSI PALET Card -->
+            <!-- TRANSAKSI PALET Card (Icon: fa-truck-loading) -->
             <div onclick="switchView('transaction-list')" class="card-dark p-6 rounded-xl text-center cursor-pointer">
-                <i class="fas fa-exchange-alt text-5xl text-blue-400 mb-3"></i>
+                <i class="fas fa-truck-loading text-5xl text-blue-400 mb-3"></i>
                 <h2 class="text-xl font-semibold mb-1">TRANSAKSI PALET</h2>
                 <p class="text-sm text-gray-400">Log Pergerakan Palet</p>
             </div>
 
-            <!-- STO PALET Card -->
+            <!-- STO PALET Card (Icon: fa-clipboard-check) -->
             <div onclick="switchView('sto-input')" class="card-dark p-6 rounded-xl text-center cursor-pointer">
                 <i class="fas fa-clipboard-check text-5xl text-blue-400 mb-3"></i>
                 <h2 class="text-xl font-semibold mb-1">STO PALET</h2>
@@ -114,13 +120,13 @@
 
         <!-- Master Palet List View -->
         <div id="view-master-list" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-100"><span onclick="switchView('dashboard')" class="cursor-pointer text-blue-400 hover:text-blue-300">HOME</span> / Master Palet</h2>
-                <div class="flex space-x-3">
-                    <button onclick="switchView('dashboard')" class="px-4 py-2 bg-gray-600 text-gray-100 rounded-lg hover:bg-gray-700 transition duration-150">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-100 mb-3 sm:mb-0"><span onclick="switchView('dashboard')" class="cursor-pointer text-blue-400 hover:text-blue-300">HOME</span> / Master Palet</h2>
+                <div class="flex flex-wrap space-x-3">
+                    <button onclick="switchView('dashboard')" class="px-4 py-2 bg-gray-600 text-gray-100 rounded-lg hover:bg-gray-700 transition duration-150 text-sm">
                         <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
                     </button>
-                    <button onclick="showMasterModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150">
+                    <button onclick="showMasterModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150 text-sm">
                         <i class="fas fa-plus mr-2"></i> Tambah Palet
                     </button>
                 </div>
@@ -133,32 +139,35 @@
                     <table class="min-w-full divide-y divide-gray-600 table-dark">
                         <thead class="bg-gray-700">
                             <tr>
+                                <!-- Kolom sesuai permintaan user -->
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">ID Palet</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tipe</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Nama Palet</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Size</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Lokasi</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Kapasitas (Kg)</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Terakhir Diperbarui</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tanggal Update</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Jml Digunakan</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Keterangan</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="master-palet-list" class="divide-y divide-gray-700">
-                            <tr><td colspan="7" class="text-center py-4 text-gray-500">Memuat data...</td></tr>
+                            <tr><td colspan="9" class="text-center py-4 text-gray-500">Memuat data...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
         
-        <!-- Transaction List View (Sederhana untuk demo) -->
+        <!-- Transaction List View (Log Transaksi Palet) -->
         <div id="view-transaction-list" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-100"><span onclick="switchView('dashboard')" class="cursor-pointer text-blue-400 hover:text-blue-300">HOME</span> / Log Transaksi Palet</h2>
-                <div class="flex space-x-3">
-                    <button onclick="switchView('dashboard')" class="px-4 py-2 bg-gray-600 text-gray-100 rounded-lg hover:bg-gray-700 transition duration-150">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-100 mb-3 sm:mb-0"><span onclick="switchView('dashboard')" class="cursor-pointer text-blue-400 hover:text-blue-300">HOME</span> / Log Transaksi Palet</h2>
+                <div class="flex flex-wrap space-x-3">
+                    <button onclick="switchView('dashboard')" class="px-4 py-2 bg-gray-600 text-gray-100 rounded-lg hover:bg-gray-700 transition duration-150 text-sm">
                         <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
                     </button>
-                    <button onclick="showTransactionModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150">
+                    <button onclick="showTransactionModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 text-sm">
                         <i class="fas fa-truck-loading mr-2"></i> Catat Transaksi
                     </button>
                 </div>
@@ -212,31 +221,43 @@
         <div class="card-dark w-11/12 max-w-lg rounded-xl p-6 transform translate-y-10 transition-transform duration-300">
             <h3 class="text-xl font-bold mb-4 border-b border-gray-600 pb-2">Tambah Master Palet Baru</h3>
             <form id="master-palet-form" onsubmit="window.handleMasterPaletSubmit(event)">
-                <div class="mb-4">
-                    <label for="masterPaletId" class="block text-sm font-medium mb-1 text-gray-300">Nama Palet (ID Palet)</label>
-                    <input type="text" id="masterPaletId" name="masterPaletId" placeholder="PS01001 / HNW-A101" required class="w-full p-3 rounded-lg input-dark">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="mb-4 md:mb-0">
+                        <label for="masterPaletId" class="block text-sm font-medium mb-1 text-gray-300">ID Palet</label>
+                        <input type="text" id="masterPaletId" name="masterPaletId" placeholder="PS01001 / HNW-A101" required class="w-full p-3 rounded-lg input-dark">
+                    </div>
+                    <div class="mb-4 md:mb-0">
+                        <label for="masterPaletName" class="block text-sm font-medium mb-1 text-gray-300">Nama Palet</label>
+                        <input type="text" id="masterPaletName" name="masterPaletName" placeholder="Nama Model Palet" class="w-full p-3 rounded-lg input-dark" required>
+                    </div>
+                    <div class="mb-4 md:mb-0">
+                        <label for="masterPaletSize" class="block text-sm font-medium mb-1 text-gray-300">Size (cth: 522.6 x 2395)</label>
+                        <input type="text" id="masterPaletSize" name="masterPaletSize" placeholder="522.6 x 2395" required class="w-full p-3 rounded-lg input-dark">
+                    </div>
+                    <div class="mb-4 md:mb-0">
+                        <label for="masterPaletStatus" class="block text-sm font-medium mb-1 text-gray-300">Status</label>
+                        <select id="masterPaletStatus" name="masterPaletStatus" required class="w-full p-3 rounded-lg select-dark">
+                            <option value="Available">Available</option>
+                            <option value="In Use">In Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="mb-4 md:mb-0">
+                        <label for="masterPaletLocation" class="block text-sm font-medium mb-1 text-gray-300">Lokasi</label>
+                        <input type="text" id="masterPaletLocation" name="masterPaletLocation" placeholder="HANWA / Gudang A" required class="w-full p-3 rounded-lg input-dark">
+                    </div>
+                    <div class="mb-4 md:mb-0">
+                        <label for="masterPaletCount" class="block text-sm font-medium mb-1 text-gray-300">Jumlah Digunakan (Initial)</label>
+                        <input type="number" id="masterPaletCount" name="masterPaletCount" placeholder="0" value="0" min="0" required class="w-full p-3 rounded-lg input-dark">
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label for="masterPaletSize" class="block text-sm font-medium mb-1 text-gray-300">Size (cth: 522.6 x 2395)</label>
-                    <input type="text" id="masterPaletSize" name="masterPaletSize" placeholder="522.6 x 2395" required class="w-full p-3 rounded-lg input-dark">
-                </div>
-                <div class="mb-4">
-                    <label for="masterPaletType" class="block text-sm font-medium mb-1 text-gray-300">Status</label>
-                    <select id="masterPaletType" name="masterPaletType" required class="w-full p-3 rounded-lg select-dark">
-                        <option value="Available">Available</option>
-                        <option value="In Use">In Use</option>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="masterPaletLocation" class="block text-sm font-medium mb-1 text-gray-300">Lokasi</label>
-                    <input type="text" id="masterPaletLocation" name="masterPaletLocation" placeholder="HANWA / Gudang A" required class="w-full p-3 rounded-lg input-dark">
-                </div>
-                <div class="mb-6">
-                    <label for="masterPaletCapacity" class="block text-sm font-medium mb-1 text-gray-300">Keterangan</label>
-                    <textarea id="masterPaletCapacity" name="masterPaletCapacity" rows="3" placeholder="Tambahkan keterangan tambahan (opsional)" class="w-full p-3 rounded-lg textarea-dark"></textarea>
+                
+                <div class="mt-4">
+                    <label for="masterPaletKeterangan" class="block text-sm font-medium mb-1 text-gray-300">Keterangan</label>
+                    <textarea id="masterPaletKeterangan" name="masterPaletKeterangan" rows="3" placeholder="Tambahkan keterangan tambahan (Opsional)" class="w-full p-3 rounded-lg textarea-dark"></textarea>
                 </div>
 
-                <div class="flex justify-end space-x-3">
+                <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" onclick="hideModal('master-modal')" class="px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition duration-150">Batal</button>
                     <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150">Simpan Palet</button>
                 </div>
@@ -259,7 +280,8 @@
                         <option value="">Pilih Jenis Transaksi</option>
                         <option value="Incoming">Masuk Hanwa (Available)</option>
                         <option value="Outgoing">Keluar/Digunakan Produksi (In Use)</option>
-                        <option value="Transfer">Transfer Lokasi (Available/In Use)</option>
+                        <option value="Transfer">Transfer Lokasi (Status Tetap)</option>
+                        <option value="Maintenance">Perawatan (Maintenance)</option>
                     </select>
                 </div>
                 <div class="mb-4">
@@ -315,8 +337,12 @@
             const modal = document.getElementById(modalId);
             modal.classList.remove('opacity-0', 'pointer-events-none');
             modal.classList.add('opacity-100', 'pointer-events-auto');
-            modal.querySelector('.card-dark').classList.remove('translate-y-10');
-            modal.querySelector('.card-dark').classList.add('translate-y-0');
+            // Ensure the modal content is visible
+            const content = modal.querySelector('.card-dark') || modal.querySelector('.bg-white');
+            if(content) {
+                content.classList.remove('translate-y-10');
+                content.classList.add('translate-y-0');
+            }
         }
 
         const hideModal = (modalId) => {
@@ -352,6 +378,7 @@
 
         // --- FETCH UTILITY (Sama seperti sebelumnya, dengan backoff) ---
         const callWebApp = async (payload) => {
+            // ... (Kode callWebApp yang sama, tidak diulang untuk keringkasan) ...
             if (WEB_APP_URL === 'YOUR_WEB_APP_URL_HERE') {
                 throw new Error("ERROR: URL Web App belum diset. Harap deploy Apps Script dan ganti URL Anda.");
             }
@@ -409,21 +436,26 @@
             list.innerHTML = ''; 
 
             if (palets.length === 0) {
-                list.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">Belum ada data Master Palet.</td></tr>';
+                list.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Belum ada data Master Palet.</td></tr>';
                 return;
             }
 
             palets.forEach(palet => {
                 const row = document.createElement('tr');
-                const statusClass = palet.Status === 'Available' ? 'bg-green-600' : (palet.Status === 'In Use' ? 'bg-red-600' : 'bg-yellow-600');
+                let statusClass = 'bg-yellow-600';
+                if (palet.Status === 'Available') statusClass = 'bg-green-600'; 
+                else if (palet.Status === 'In Use') statusClass = 'bg-red-600';
                 
+                // Pastikan nama kolom sesuai dengan keys dari data Google Sheet
                 row.innerHTML = `
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-100">${palet.ID_Palet}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${palet.Size || palet.Tipe}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${palet.Nama_Palet || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${palet.Size || '-'}</td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass} text-white">${palet.Status}</span></td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${palet.Lokasi}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${palet.Kapasitas || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${palet.Terakhir_Diperbarui}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${palet.Tanggal_update || palet.Terakhir_Diperbarui}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${palet.Jumlah_Digunakan || 0}</td>
+                    <td class="px-4 py-3 text-sm text-gray-400 max-w-xs truncate" title="${palet.Keterangan || palet.Kapasitas || ''}">${palet.Keterangan || palet.Kapasitas || '-'}</td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
                         <button onclick="window.handleDeleteMasterPalet('${palet.ID_Palet}')" class="text-red-400 hover:text-red-300 ml-2"><i class="fas fa-trash"></i> Hapus</button>
                     </td>
@@ -476,11 +508,13 @@
             
             const paletData = {
                 ID_Palet: paletId,
-                Size: formData.get('masterPaletSize'), // Menggunakan "Size"
+                Nama_Palet: formData.get('masterPaletName'), // Kolom baru
+                Size: formData.get('masterPaletSize'),
+                Status: formData.get('masterPaletStatus'),
                 Lokasi: formData.get('masterPaletLocation'),
-                Kapasitas: formData.get('masterPaletCapacity'), // Menggunakan Kapasitas untuk Keterangan
-                Status: formData.get('masterPaletType'), // Menggunakan Type untuk Status
-                Terakhir_Diperbarui: new Date().toLocaleString('id-ID'),
+                Tanggal_update: new Date().toLocaleString('id-ID'), // Menggunakan nama kolom baru
+                Jumlah_Digunakan: formData.get('masterPaletCount'), // Kolom baru
+                Keterangan: formData.get('masterPaletKeterangan'), // Menggunakan nama kolom baru
             };
 
             const payload = {
@@ -492,8 +526,9 @@
                 const result = await callWebApp(payload);
                 showMessageModal(result.message, 'success');
                 form.reset();
+                // Muat ulang data jika sedang di view list
                 if (document.getElementById('view-master-list').classList.contains('hidden') === false) {
-                    await loadAllData(); 
+                    await loadAllData(false); 
                 }
             } catch (error) {
                 console.error("Gagal menyimpan Palet:", error);
@@ -519,7 +554,7 @@
             try {
                 const result = await callWebApp(payload);
                 showMessageModal(result.message, 'success');
-                await loadAllData();
+                await loadAllData(false);
             } catch (error) {
                 console.error("Gagal menghapus Palet:", error);
                 showMessageModal(`Gagal menghapus Palet: ${error.message}. Cek konsol untuk detail.`, 'error');
@@ -544,24 +579,34 @@
 
             try {
                 // 1. Check Palet Existence (Master Palet data must be loaded)
-                if(masterPaletsData.length === 0) await loadAllData(false); // Pastikan data master dimuat
+                if(masterPaletsData.length === 0) await loadAllData(false); 
                 const existingPalet = masterPaletsData.find(p => p.ID_Palet === paletId);
                 if (!existingPalet) {
                     throw new Error(`Master Palet ID ${paletId} tidak ditemukan. Harap daftarkan palet ini terlebih dahulu.`);
                 }
                 
-                // 2. Determine New Status based on transaction type
+                // 2. Determine New Status & Update Count
                 let newStatus = existingPalet.Status;
-                if (transactionType === 'Incoming') newStatus = 'Available';
-                else if (transactionType === 'Outgoing') newStatus = 'In Use';
-                else if (transactionType === 'Transfer') newStatus = existingPalet.Status; // Status tidak berubah saat transfer
+                let newCount = parseInt(existingPalet.Jumlah_Digunakan || 0, 10);
+                
+                if (transactionType === 'Incoming') {
+                    newStatus = 'Available';
+                    // Asumsi: Incoming adalah palet kembali, jadi Jumlah Digunakan bisa dikurangi (jika logis) atau tetap. Kita biarkan tetap 0 jika kembali ke Available.
+                    newCount = 0; 
+                } else if (transactionType === 'Outgoing') {
+                    newStatus = 'In Use';
+                    newCount += 1; // Palet digunakan
+                } else if (transactionType === 'Maintenance') {
+                    newStatus = 'Maintenance';
+                } // Transfer status tetap
 
                 // 3. Prepare Update Data
                 const masterUpdateData = {
                     ID_Palet: paletId,
                     Lokasi: newLocation,
                     Status: newStatus,
-                    Terakhir_Diperbarui: new Date().toLocaleString('id-ID'),
+                    Tanggal_update: new Date().toLocaleString('id-ID'), // Menggunakan nama kolom baru
+                    Jumlah_Digunakan: newCount,
                 };
                 
                 const transactionData = {
@@ -581,10 +626,10 @@
 
                 const result = await callWebApp(payload);
 
-                showMessageModal(`Transaksi Palet ${paletId} (${transactionType}) berhasil dicatat.`, 'success');
+                showMessageModal(`Transaksi Palet ${paletId} (${transactionType}) berhasil dicatat. Status baru: ${newStatus}.`, 'success');
                 form.reset();
                 if (document.getElementById('view-transaction-list').classList.contains('hidden') === false) {
-                    await loadAllData(); 
+                    await loadAllData(false); 
                 }
                 
             } catch (error) {
@@ -616,7 +661,6 @@
 
             } catch (error) {
                 console.error("Gagal memuat data:", error);
-                // Hanya tampilkan modal error jika ini adalah load pertama atau load list view
                 if(showLoading) {
                     showMessageModal(`Gagal memuat data. Pastikan Apps Script sudah di-deploy dan URL sudah benar. Detail Error: ${error.message}`, 'error');
                 }
@@ -628,6 +672,7 @@
 
         // --- INITIALIZATION ---
         window.onload = () => {
+            document.getElementById('user-id-display').textContent = dummyUserDisplay;
             switchView('dashboard');
             // Muat data di background saat pertama kali load
             loadAllData(false); 
