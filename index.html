@@ -597,7 +597,8 @@
                             
                             <div class="mt-8 pt-4 border-t border-gray-700 flex justify-end">
                                 <button type="submit" id="submit-btn" class="btn-primary bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition">
-                                    Kirim Transaksi (<span id="submit-count">0</span> Palet)
+                                    <!-- PERUBAHAN 1: Membungkus teks dalam <span> baru -->
+                                    <span id="submit-btn-text">Kirim Transaksi</span> (<span id="submit-count">0</span> Palet)
                                 </button>
                             </div>
                         </form>
@@ -837,92 +838,39 @@
             event.preventDefault();
             const form = event.target;
             const submitBtn = document.getElementById('submit-btn');
+            // PERUBAHAN 2: Dapatkan kedua elemen span secara terpisah
+            const submitBtnTextEl = document.getElementById('submit-btn-text');
+            const submitCountEl = document.getElementById('submit-count');
+            
             const formData = new FormData(form);
             
             if (selectedPalletIds.length === 0) {
-                showMessage('error', '❌ Harap pilih minimal satu ID Palet dari kartu yang tersedia.');
+// ... existing code ... -->
                 return;
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = `Mengirim ${selectedPalletIds.length} Transaksi...`;
+            // PERUBAHAN 2: Hanya ubah teks, bukan seluruh tombol
+            submitBtnTextEl.textContent = 'Mengirim...';
+            // submitCountEl sudah diatur oleh updateSelectedDisplay() saat mengklik,
+            // tapi kita bisa atur lagi di sini untuk keamanan.
+            submitCountEl.textContent = selectedPalletIds.length; 
+            
             showMessage('loading', `Mengirim data untuk ${selectedPalletIds.length} palet, mohon tunggu...`);
 
             // --- PERUBAHAN LOGIKA PENGIRIMAN DATA ---
 
-            // 1. Ambil semua data input dari form
-            const namaPalet = formData.get('namaPalet');
-            const sizePalet = formData.get('sizePalet');
-            const tanggalTransaksi = formData.get('tanggalTransaksi');
-            const jenisTransaksi = formData.get('jenisTransaksi');
-            const keterangan = formData.get('keterangan') || '-';
-            
-            // 2. Gabungkan ID Palet yang dipilih menjadi satu string, dipisahkan koma
-            const idPaletString = selectedPalletIds.join(',');
-
-            // 3. (Opsional) Tambahkan info waktu dan ID unik untuk batch ini
-            const now = new Date();
-            const jamTransaksi = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const idTransaksiBatch = `TRX-BATCH-${crypto.randomUUID().substring(0, 8).toUpperCase()}`; 
-
-            // 4. Buat SATU objek transaksi tunggal untuk batch ini
-            // Kolom disesuaikan dengan permintaan Anda
-            const batchTransaction = {
-                // 'ID Transaksi Batch': idTransaksiBatch, // Opsional jika Anda butuh ID Unik
-                'Nama Palet': namaPalet,
-                'Size': sizePalet, // Menggunakan 'Size' sesuai permintaan (bukan 'Size Palet')
-                'Tanggal Transaksi': tanggalTransaksi,
-                'Jenis Transaksi': jenisTransaksi,
-                'ID Palet': idPaletString, // Data yang digabungkan
-                'Jumlah Palet': selectedPalletIds.length, // Tambahan info jumlah
-                'Jam Transaksi': jamTransaksi, // Tambahan info jam
-                'Keterangan': keterangan,
-            };
-
-            // 5. Siapkan array transaksi (hanya berisi satu objek)
-            const transactionsToSend = [batchTransaction];
-            
-            console.log(`Satu Transaksi Batch yang akan dikirim ke sheet ${TRANSACTION_SHEET_NAME}:`, batchTransaction);
-            
-            // 6. Kirim array data ke Apps Script
-            const payload = {
-                sheetName: TRANSACTION_SHEET_NAME, // Target sheet name
-                transactions: transactionsToSend, // Array berisi SATU objek batch
-                submittedBy: userId,
-                timestamp: now.toLocaleString('id-ID'),
-            };
-
-            try {
-                // ** PERHATIAN: MOCK API URL DIGUNAKAN. GANTI DENGAN ASLI! **
-                await fetch(MOCK_API_DEPLOY_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload), // Kirim payload lengkap
-                });
-                
-                // Beri penundaan sedikit untuk simulasi kiriman
-                await new Promise(resolve => setTimeout(resolve, 1500)); 
-
-                // Pesan sukses disesuaikan
-                showMessage('success', `✅ Berhasil mencatat 1 Transaksi Batch (untuk ${selectedPalletIds.length} palet) ke ${TRANSACTION_SHEET_NAME}!`);
-                form.reset();
-                
-                // Reset Dropdown, State, dan Kartu (Logika ini tetap sama)
-                selectedPalletIds = [];
-                updateSelectedDisplay(); 
-                document.getElementById('sizePalet').innerHTML = createOptionHtml([], 'Pilih Size Palet');
-                document.getElementById('sizePalet').disabled = true;
-                document.getElementById('pallet-id-card-container').innerHTML = '<p class="text-gray-500 col-span-full" id="id-card-status">Pilih Nama Palet dan Size Palet terlebih dahulu.</p>';
-
-
-            } catch (error) {
-                console.error("Kesalahan saat mengirim data:", error);
+// ... existing code ... -->
                 showMessage('error', `❌ Gagal menyimpan transaksi batch. Pastikan Apps Script (sheet ${TRANSACTION_SHEET_NAME}) siap menerima data ini. Detail error: ${error.message}`);
             } finally {
                 submitBtn.disabled = false;
-                // Reset jumlah di tombol
-                submitBtn.textContent = `Kirim Transaksi (0 Palet)`;
+                // PERUBAHAN 2: Reset teks tombol dengan benar
+                submitBtnTextEl.textContent = 'Kirim Transaksi';
+                // Reset jumlah di tombol (karena selectedPalletIds sudah dikosongkan di 'try')
+                // Jika error, selectedPalletIds tidak dikosongkan, jadi hitungan tetap ada, itu tidak apa-apa.
+                if(selectedPalletIds.length === 0) {
+                    submitCountEl.textContent = '0';
+                }
             }
         }
         
