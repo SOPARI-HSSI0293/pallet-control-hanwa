@@ -647,8 +647,8 @@
             const namaPalet = document.getElementById('namaPalet').value;
             const sizePaletEl = document.getElementById('sizePalet');
             
-            sizePaletEl.innerHTML = createOptionHtml([], 'Pilih Size Palet');
-            sizePaletEl.disabled = true;
+            sizePalletEl.innerHTML = createOptionHtml([], 'Pilih Size Palet');
+            sizePalletEl.disabled = true;
             
             // Reset state dan tampilan
             selectedPalletIds = []; 
@@ -748,6 +748,7 @@
             const selectedCountEl = document.getElementById('selected-count');
             
             // Perbarui jumlah di tombol submit dan header
+            // Tidak akan error lagi karena submitCountEl tidak pernah dihapus/ditimpa
             submitCountEl.textContent = selectedPalletIds.length;
             selectedCountEl.textContent = `(${selectedPalletIds.length} Palet Dipilih)`;
 
@@ -845,7 +846,7 @@
             const formData = new FormData(form);
             
             if (selectedPalletIds.length === 0) {
-// ... existing code ... -->
+                showMessage('error', '❌ Harap pilih minimal satu ID Palet dari kartu yang tersedia.');
                 return;
             }
 
@@ -860,7 +861,74 @@
 
             // --- PERUBAHAN LOGIKA PENGIRIMAN DATA ---
 
-// ... existing code ... -->
+            // 1. Ambil semua data input dari form
+            const namaPalet = formData.get('namaPalet');
+            const sizePalet = formData.get('sizePalet');
+            const tanggalTransaksi = formData.get('tanggalTransaksi');
+            const jenisTransaksi = formData.get('jenisTransaksi');
+            const keterangan = formData.get('keterangan') || '-';
+            
+            // 2. Gabungkan ID Palet yang dipilih menjadi satu string, dipisahkan koma
+            const idPaletString = selectedPalletIds.join(',');
+
+            // 3. (Opsional) Tambahkan info waktu dan ID unik untuk batch ini
+            const now = new Date();
+            const jamTransaksi = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            // const idTransaksiBatch = `TRX-BATCH-${crypto.randomUUID().substring(0, 8).toUpperCase()}`; // Dihilangkan karena tidak diminta
+
+            // 4. Buat SATU objek transaksi tunggal untuk batch ini
+            // Kolom disesuaikan dengan permintaan Anda
+            const batchTransaction = {
+                // Kolom di Google Sheet harus sesuai urutan:
+                'Nama Palet': namaPalet,
+                'Size': sizePalet, 
+                'Tanggal Transaksi': tanggalTransaksi,
+                'Jenis Transaksi': jenisTransaksi,
+                'ID Palet': idPaletString, // Data yang digabungkan
+                'Jumlah Palet': selectedPalletIds.length, // Tambahan info jumlah
+                'Jam Transaksi': jamTransaksi, // Tambahan info jam
+                'Keterangan': keterangan,
+            };
+
+            // 5. Siapkan array transaksi (hanya berisi satu objek)
+            const transactionsToSend = [batchTransaction];
+            
+            console.log(`Satu Transaksi Batch yang akan dikirim ke sheet ${TRANSACTION_SHEET_NAME}:`, batchTransaction);
+            
+            // 6. Kirim array data ke Apps Script
+            const payload = {
+                sheetName: TRANSACTION_SHEET_NAME, // Target sheet name
+                transactions: transactionsToSend, // Array berisi SATU objek batch
+                submittedBy: userId,
+                timestamp: now.toLocaleString('id-ID'),
+            };
+
+            try {
+                // ** PERHATIAN: MOCK API URL DIGUNAKAN. GANTI DENGAN ASLI! **
+                await fetch(MOCK_API_DEPLOY_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload), // Kirim payload lengkap
+                });
+                
+                // Beri penundaan sedikit untuk simulasi kiriman
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+                // Pesan sukses disesuaikan
+                showMessage('success', `✅ Berhasil mencatat 1 Transaksi Batch (untuk ${selectedPalletIds.length} palet) ke ${TRANSACTION_SHEET_NAME}!`);
+                form.reset();
+                
+                // Reset Dropdown, State, dan Kartu (Logika ini tetap sama)
+                selectedPalletIds = [];
+                updateSelectedDisplay(); 
+                document.getElementById('sizePalet').innerHTML = createOptionHtml([], 'Pilih Size Palet');
+                document.getElementById('sizePalet').disabled = true;
+                document.getElementById('pallet-id-card-container').innerHTML = '<p class="text-gray-500 col-span-full" id="id-card-status">Pilih Nama Palet dan Size Palet terlebih dahulu.</p>';
+
+
+            } catch (error) {
+                console.error("Kesalahan saat mengirim data:", error);
                 showMessage('error', `❌ Gagal menyimpan transaksi batch. Pastikan Apps Script (sheet ${TRANSACTION_SHEET_NAME}) siap menerima data ini. Detail error: ${error.message}`);
             } finally {
                 submitBtn.disabled = false;
