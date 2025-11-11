@@ -597,7 +597,7 @@
                             
                             <div class="mt-8 pt-4 border-t border-gray-700 flex justify-end">
                                 <button type="submit" id="submit-btn" class="btn-primary bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition">
-                                    <!-- PERUBAHAN 1: Membungkus teks dalam <span> baru -->
+                                    <!-- PERBAIKAN ERROR: Membungkus teks dalam <span> baru -->
                                     <span id="submit-btn-text">Kirim Transaksi</span> (<span id="submit-count">0</span> Palet)
                                 </button>
                             </div>
@@ -628,13 +628,14 @@
                     return;
                 }
 
-                const uniqueNames = [...new Set(data.map(item => item['Nama Palet']).filter(name => name))];
+                // Ambil Nama Palet unik dan pastikan nilainya tidak kosong
+                const uniqueNames = [...new Set(data.map(item => String(item['Nama Palet']).trim()).filter(name => name))];
                 const options = uniqueNames.map(name => ({ value: name, label: name }));
                 namaPaletEl.innerHTML = createOptionHtml(options, 'Pilih Nama Palet');
                 namaPaletEl.disabled = false;
                 statusEl.textContent = `Data Master siap (${data.length} entri)`;
                 
-                updateSizePallet();
+                // updateSizePallet(); // Tidak perlu dipanggil di sini, akan dipanggil oleh event 'change' pertama
             };
 
             await fetchGoogleSheetData(MASTER_PALLET_URL, statusMessageEl, {classList:{add:()=>{}, remove:()=>{}}}, updateMasterData);
@@ -642,13 +643,16 @@
         
         /**
          * Dipanggil saat Nama Palet diubah. Mengisi dropdown Size Palet.
+         * Telah diperbaiki: menggunakan .trim() untuk robust filtering.
          */
         function updateSizePallet() {
-            const namaPalet = document.getElementById('namaPalet').value;
+            // PERBAIKAN: Gunakan .trim() untuk menghilangkan spasi yang tidak disengaja dari data sheet
+            const namaPalet = document.getElementById('namaPalet').value.trim();
             const sizePaletEl = document.getElementById('sizePalet');
             
-            sizePalletEl.innerHTML = createOptionHtml([], 'Pilih Size Palet');
-            sizePalletEl.disabled = true;
+            // Reset elemen size
+            sizePaletEl.innerHTML = createOptionHtml([], 'Pilih Size Palet');
+            sizePaletEl.disabled = true;
             
             // Reset state dan tampilan
             selectedPalletIds = []; 
@@ -657,10 +661,22 @@
 
             if (!namaPalet) return;
 
-            const filteredBySize = masterPalletData.filter(item => item['Nama Palet'] === namaPalet);
-            const uniqueSizes = [...new Set(filteredBySize.map(item => item['Size']).filter(size => size))];
+            // PERBAIKAN: Gunakan .trim() pada data master saat filtering
+            const filteredBySize = masterPalletData.filter(item => 
+                String(item['Nama Palet']).trim() === namaPalet
+            );
+            
+            const uniqueSizes = [...new Set(
+                filteredBySize.map(item => String(item['Size']).trim()).filter(size => size)
+            )];
+            
             const options = uniqueSizes.map(size => ({ value: size, label: size }));
             
+            if (options.length === 0) {
+                 sizePaletEl.innerHTML = createOptionHtml([], 'Tidak ada Size Palet tersedia');
+                 return;
+            }
+
             sizePaletEl.innerHTML = createOptionHtml(options, 'Pilih Size Palet');
             sizePaletEl.disabled = false;
         }
@@ -669,8 +685,8 @@
          * Dipanggil saat Size Palet diubah. Merender kartu ID Palet.
          */
         function renderPalletIdCards() {
-            const namaPalet = document.getElementById('namaPalet').value;
-            const sizePalet = document.getElementById('sizePalet').value;
+            const namaPalet = document.getElementById('namaPalet').value.trim();
+            const sizePalet = document.getElementById('sizePalet').value.trim();
             const container = document.getElementById('pallet-id-card-container');
             
             // Bersihkan kartu, jaga pesan status
@@ -686,9 +702,9 @@
                 return;
             }
 
-            // 1. Filter data berdasarkan Nama Palet dan Size
+            // 1. Filter data berdasarkan Nama Palet dan Size (menggunakan trim)
             const filteredData = masterPalletData.filter(item => 
-                item['Nama Palet'] === namaPalet && item['Size'] === sizePalet
+                String(item['Nama Palet']).trim() === namaPalet && String(item['Size']).trim() === sizePalet
             );
             
             // Hapus pesan status placeholder
@@ -748,7 +764,6 @@
             const selectedCountEl = document.getElementById('selected-count');
             
             // Perbarui jumlah di tombol submit dan header
-            // Tidak akan error lagi karena submitCountEl tidak pernah dihapus/ditimpa
             submitCountEl.textContent = selectedPalletIds.length;
             selectedCountEl.textContent = `(${selectedPalletIds.length} Palet Dipilih)`;
 
@@ -839,7 +854,7 @@
             event.preventDefault();
             const form = event.target;
             const submitBtn = document.getElementById('submit-btn');
-            // PERUBAHAN 2: Dapatkan kedua elemen span secara terpisah
+            // Dapatkan kedua elemen span secara terpisah untuk menghindari error
             const submitBtnTextEl = document.getElementById('submit-btn-text');
             const submitCountEl = document.getElementById('submit-count');
             
@@ -851,33 +866,29 @@
             }
 
             submitBtn.disabled = true;
-            // PERUBAHAN 2: Hanya ubah teks, bukan seluruh tombol
+            // Hanya ubah teks, bukan seluruh tombol
             submitBtnTextEl.textContent = 'Mengirim...';
-            // submitCountEl sudah diatur oleh updateSelectedDisplay() saat mengklik,
-            // tapi kita bisa atur lagi di sini untuk keamanan.
             submitCountEl.textContent = selectedPalletIds.length; 
             
             showMessage('loading', `Mengirim data untuk ${selectedPalletIds.length} palet, mohon tunggu...`);
 
             // --- PERUBAHAN LOGIKA PENGIRIMAN DATA ---
 
-            // 1. Ambil semua data input dari form
-            const namaPalet = formData.get('namaPalet');
-            const sizePalet = formData.get('sizePalet');
-            const tanggalTransaksi = formData.get('tanggalTransaksi');
-            const jenisTransaksi = formData.get('jenisTransaksi');
-            const keterangan = formData.get('keterangan') || '-';
+            // 1. Ambil semua data input dari form (gunakan trim untuk keamanan)
+            const namaPalet = formData.get('namaPalet').trim();
+            const sizePalet = formData.get('sizePalet').trim();
+            const tanggalTransaksi = formData.get('tanggalTransaksi').trim();
+            const jenisTransaksi = formData.get('jenisTransaksi').trim();
+            const keterangan = formData.get('keterangan').trim() || '-';
             
             // 2. Gabungkan ID Palet yang dipilih menjadi satu string, dipisahkan koma
             const idPaletString = selectedPalletIds.join(',');
 
-            // 3. (Opsional) Tambahkan info waktu dan ID unik untuk batch ini
+            // 3. Tambahkan info waktu 
             const now = new Date();
             const jamTransaksi = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            // const idTransaksiBatch = `TRX-BATCH-${crypto.randomUUID().substring(0, 8).toUpperCase()}`; // Dihilangkan karena tidak diminta
 
             // 4. Buat SATU objek transaksi tunggal untuk batch ini
-            // Kolom disesuaikan dengan permintaan Anda
             const batchTransaction = {
                 // Kolom di Google Sheet harus sesuai urutan:
                 'Nama Palet': namaPalet,
@@ -932,10 +943,9 @@
                 showMessage('error', `❌ Gagal menyimpan transaksi batch. Pastikan Apps Script (sheet ${TRANSACTION_SHEET_NAME}) siap menerima data ini. Detail error: ${error.message}`);
             } finally {
                 submitBtn.disabled = false;
-                // PERUBAHAN 2: Reset teks tombol dengan benar
+                // Reset teks tombol dengan benar
                 submitBtnTextEl.textContent = 'Kirim Transaksi';
-                // Reset jumlah di tombol (karena selectedPalletIds sudah dikosongkan di 'try')
-                // Jika error, selectedPalletIds tidak dikosongkan, jadi hitungan tetap ada, itu tidak apa-apa.
+                // Reset jumlah di tombol
                 if(selectedPalletIds.length === 0) {
                     submitCountEl.textContent = '0';
                 }
