@@ -462,11 +462,13 @@
         
         /**
          * Mengurai struktur data GViz menjadi array objek JavaScript yang sederhana.
+         * (MODIFIKASI v4.2)
          */
         function parseGVizData(data) {
             const columns = data.table.cols.map(col => ({
                 id: col.id,
-                label: col.label || col.id  
+                // (FIX) Normalisasi semua label header ke HURUF BESAR & trim spasi
+                label: (col.label || col.id).toUpperCase().trim()  
             })).filter(col => col.label); // Hilangkan kolom tanpa label
 
             const rows = data.table.rows;
@@ -476,6 +478,7 @@
                 for (const row of rows) {
                     const rowObject = {};
                     for (let i = 0; i < columns.length; i++) {
+                        // (FIX) colLabel sekarang dijamin HURUF BESAR
                         const colLabel = columns[i].label;
                         rowObject[colLabel] = row.c[i] ? (row.c[i].f || row.c[i].v) : '';
                     }
@@ -483,6 +486,7 @@
                 }
             }
             
+            // (FIX) Headers yang dikembalikan juga sekarang HURUF BESAR
             return { data: result, headers: columns.map(c => c.label) };
         }
         
@@ -811,8 +815,9 @@
             }
 
             tableBodyEl.innerHTML = data.map((item, index) => {
-                const status = item['Status'] || '';
-                const lokasi = item['Lokasi'] || '';
+                // (FIX) Menggunakan header HURUF BESAR
+                const status = item['STATUS'] || '';
+                const lokasi = item['LOKASI'] || '';
 
                 const rowColorClass = getRowColorClass(status, lokasi);
                 const rowBgClass = (index % 2 === 0 ? 'bg-zinc-800' : 'bg-zinc-700');
@@ -1066,7 +1071,8 @@
                     return;
                 }
 
-                const uniqueNames = [...new Set(data.map(item => String(item['Nama Palet']).trim()).filter(name => name))];
+                // (FIX) Menggunakan header HURUF BESAR
+                const uniqueNames = [...new Set(data.map(item => String(item['NAMA PALET']).trim()).filter(name => name))];
                 const options = uniqueNames.map(name => ({ value: name, label: name }));
                 namaPaletEl.innerHTML = createOptionHtml(options, 'Pilih Nama Palet');
                 namaPaletEl.disabled = false;
@@ -1093,12 +1099,13 @@
 
             if (!namaPalet) return;
 
+            // (FIX) Menggunakan header HURUF BESAR
             const filteredBySize = masterPalletData.filter(item => 
-                String(item['Nama Palet']).trim() === namaPalet
+                String(item['NAMA PALET']).trim() === namaPalet
             );
             
             const uniqueSizes = [...new Set(
-                filteredBySize.map(item => String(item['Size']).trim()).filter(size => size)
+                filteredBySize.map(item => String(item['SIZE']).trim()).filter(size => size)
             )];
             
             const options = uniqueSizes.map(size => ({ value: size, label: size }));
@@ -1133,8 +1140,9 @@
                 return;
             }
 
+            // (FIX) Menggunakan header HURUF BESAR
             const filteredData = masterPalletData.filter(item => 
-                String(item['Nama Palet']).trim() === namaPalet && String(item['Size']).trim() === sizePalet
+                String(item['NAMA PALET']).trim() === namaPalet && String(item['SIZE']).trim() === sizePalet
             );
             
             const existingStatusEl = document.getElementById('id-card-status');
@@ -1146,7 +1154,8 @@
             }
 
             filteredData.forEach(item => {
-                const idPalet = item['ID Palet'];
+                // (FIX) Menggunakan header HURUF BESAR
+                const idPalet = item['ID PALET'];
                 if (!idPalet) return; 
                 
                 const card = document.createElement('div');
@@ -1479,8 +1488,9 @@
             }
             
             const filteredData = historyPalletData.filter(item => {
-                const idPaletString = String(item['ID Palet'] || '').toUpperCase();
-                return idPalletString.includes(filterValue);
+                // (FIX) Menggunakan header HURUF BESAR
+                const idPaletString = String(item['ID PALET'] || '').toUpperCase();
+                return idPaletString.includes(filterValue);
             });
             
             renderHistoryTableBody(filteredData);
@@ -1571,18 +1581,20 @@
             
             // Loop melalui setiap aturan di sheet "Ambang Batas"
             ambangBatasData.forEach(rule => {
-                const namaPalet = String(rule['Nama Palet'] || '').trim();
-                const size = String(rule['Size'] || '').trim();
-                const stokMinimum = parseInt(rule['Stok Minimum'], 10);
+                // (FIX) Menggunakan header HURUF BESAR (Asumsi sheet Ambang Batas juga sama)
+                const namaPalet = String(rule['NAMA PALET'] || '').trim();
+                const size = String(rule['SIZE'] || '').trim();
+                const stokMinimum = parseInt(rule['STOK MINIMUM'], 10);
                 
                 if (!namaPalet || !size || isNaN(stokMinimum)) return; // Lewati aturan yang tidak valid
                 
+                // (FIX) Menggunakan header HURUF BESAR
                 // Hitung stok *siap pakai* dari Master Data
                 const stokSiapPakai = masterPalletData.filter(item =>
-                    String(item['Nama Palet'] || '').trim() === namaPalet &&
-                    String(item['Size'] || '').trim() === size &&
-                    String(item['Status'] || '').toUpperCase() === 'KOSONG' &&
-                    String(item['Lokasi'] || '').toUpperCase() === 'AREA PALET'
+                    String(item['NAMA PALET'] || '').trim() === namaPalet &&
+                    String(item['SIZE'] || '').trim() === size &&
+                    String(item['STATUS'] || '').toUpperCase() === 'KOSONG' &&
+                    String(item['LOKASI'] || '').toUpperCase() === 'AREA PALET'
                 ).length;
                 
                 // Bandingkan
@@ -1708,8 +1720,10 @@
             const today = new Date();
             
             masterPalletData.forEach(item => {
-                if (String(item['Lokasi'] || '').toUpperCase() === 'CUSTOMER') {
-                    const tglUpdateStr = String(item['Tanggal Update'] || '');
+                // (FIX) Menggunakan header HURUF BESAR
+                if (String(item['LOKASI'] || '').toUpperCase() === 'CUSTOMER') {
+                    // (FIX) Menggunakan header HURUF BESAR
+                    const tglUpdateStr = String(item['TANGGAL UPDATE'] || '');
                     // Format tanggal di sheet adalah MM/DD/YYYY, perlu di-parse
                     const parts = tglUpdateStr.split('/');
                     if (parts.length === 3) {
@@ -1773,7 +1787,8 @@
             };
             
             historyPalletData.forEach(item => {
-                const kondisi = String(item['Keterangan'] || '').trim();
+                // (FIX) Menggunakan header HURUF BESAR
+                const kondisi = String(item['KETERANGAN'] || '').trim();
                 if (kondisi === 'Baik') conditions['Baik']++;
                 else if (kondisi === 'Rusak Ringan') conditions['Rusak Ringan']++;
                 else if (kondisi === 'Rusak Berat') conditions['Rusak Berat']++;
@@ -1826,14 +1841,15 @@
             
             // Proses data history
             historyPalletData.forEach(item => {
-                const tglStr = String(item['Tanggal Transaksi'] || '');
-                const jenis = String(item['Jenis Transaksi'] || '').toUpperCase();
-                const jumlah = parseInt(item['Jumlah Palet'], 10) || 0;
+                // (FIX) Menggunakan header HURUF BESAR
+                const tglStr = String(item['TANGGAL TRANSAKSI'] || '');
+                const jenis = String(item['JENIS TRANSAKSI'] || '').toUpperCase();
+                const jumlah = parseInt(item['JUMLAH PALET'], 10) || 0;
                 
                 const parts = tglStr.split('/');
                 if (parts.length === 3) {
                      // Format di sheet MM/DD/YYYY, tapi kita hanya butuh MM/DD
-                    const label = `${parts[0]}/${parts[1]}`;
+                    const label = `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}`;
                     
                     if (last30Days[label]) {
                         if (jenis === 'MASUK HANWA') last30Days[label]['Masuk Hanwa'] += jumlah;
