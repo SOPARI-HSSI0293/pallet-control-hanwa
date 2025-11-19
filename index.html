@@ -6,7 +6,7 @@
     <title>Kontrol Palet Hanwa</title>
     <!-- Memuat Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- (BARU) Memuat Chart.js untuk Dashboard Analitik -->
+    <!-- Memuat Chart.js untuk Dashboard Analitik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Mengatur font default dan dark mode (Tema Hijau/Hitam/Putih) */
@@ -58,7 +58,6 @@
             background-color: #27272a; /* Zinc 800 */
         }
         .pallet-table th {
-            /* Styling header yang ditingkatkan */
             background-color: #18181b; /* Zinc 900 (Lebih gelap) */
             color: #9ca3af;
         }
@@ -74,16 +73,16 @@
             background-color: #18181b; /* Pastikan background sama */
             border-bottom: 1px solid #3f3f46; /* Garis bawah abu-abu */
             position: sticky;
-            top: 37px; /* (py-3 + text-xs) ~ 12px+12px+13px. Sesuaikan jika perlu */
+            top: 37px; 
             z-index: 10;
         }
         .pallet-table tr:nth-child(even) {
             background-color: #3f3f46; /* Zinc 700 */
         }
-        /* Kelas warna bersyarat (Tetap sama) */
-        .color-green { color: #34d399; } /* Tailwind green-400 */
-        .color-orange { color: #f97316; } /* Tailwind orange-600 */
-        .color-red { color: #f87171; } /* Tailwind red-400 */
+        .color-green { color: #34d399; } 
+        .color-orange { color: #f97316; } 
+        .color-red { color: #f87171; } 
+        
         /* Style untuk tombol */
         .btn-primary {
             transition: all 0.2s;
@@ -106,7 +105,6 @@
             border-color: #16a34a; /* Green 600 */
             box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
         }
-        /* Style untuk display ID yang dipilih */
         .selected-id-tag {
             background-color: #22c55e; /* Green 500 */
             color: #18181b; /* Teks gelap */
@@ -114,13 +112,13 @@
             border-radius: 0.375rem;
             font-size: 0.875rem;
         }
-        /* (BARU) Style untuk Chart Container di Analitik */
+        /* Style untuk Chart Container */
         .chart-container {
             background-color: #27272a; /* Zinc 800 */
             padding: 1.5rem;
-            border-radius: 0.75rem; /* rounded-xl */
+            border-radius: 0.75rem; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            height: 400px; /* Tinggi tetap agar konsisten */
+            height: 400px; 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -130,13 +128,11 @@
 <body>
 
     <!-- Kontainer Utama Aplikasi -->
-    <div id="app-container" class="min-h-screen">
-        <!-- Konten akan dimuat di sini oleh JavaScript -->
-    </div>
+    <div id="app-container" class="min-h-screen"></div>
 
     <!-- Firebase, Navigasi, dan Logic JavaScript -->
     <script type="module">
-        // --- 1. SETUP FIREBASE (MANDATORI SESUAI ATURAN PLATFORM) ---
+        // --- 1. SETUP FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -149,18 +145,17 @@
         
         // --- DATA STATE GLOBAL ---
         let currentUser = null; 
-        let masterPalletData = []; // Menyimpan semua data Master Palet
-        let masterPalletHeaders = []; // Menyimpan header master palet
-        let historyPalletData = []; // Menyimpan data history untuk filter
-        let historyPalletHeaders = []; // Menyimpan header tabel history
-        let selectedPalletIds = []; // Menyimpan ID Palet yang sedang dipilih untuk transaksi
-        // (BARU) State untuk data analitik dan notifikasi
-        let ambangBatasData = []; // Menyimpan data ambang batas
-        let criticalStockAlerts = []; // Menyimpan pesan notifikasi
+        let masterPalletData = []; 
+        let masterPalletHeaders = []; 
+        let historyPalletData = []; 
+        let historyPalletHeaders = []; 
+        let selectedPalletIds = []; 
+        let ambangBatasData = []; 
+        let criticalStockAlerts = []; 
+        // Flag fetch dihapus/direset saat navigasi
         let isMasterDataFetched = false;
         let isHistoryDataFetched = false;
         let isAmbangBatasDataFetched = false;
-        // (BARU) Variabel untuk menyimpan instance Chart.js agar bisa dihancurkan
         let chartInstances = {
             palletAging: null,
             palletCondition: null,
@@ -169,12 +164,10 @@
 
 
         /**
-         * (MODIFIKASI) Inisialisasi Firebase
-         * Dibuat async dan mengembalikan Promise.
-         * Tidak lagi me-render app, hanya setup auth.
+         * Inisialisasi Firebase
          */
         async function initializeFirebase() {
-            if (auth) return; // Sudah diinisialisasi
+            if (auth) return; 
 
             return new Promise((resolve) => {
                 try {
@@ -188,69 +181,70 @@
                             console.log("Firebase Auth State Changed. User ID:", userId);
                             resolve();
                         } else {
-                            // Jika tidak ada token, login anonim
                             signInAnonymously(auth).then(cred => {
                                 userId = cred.user.uid;
-                                console.log("Firebase Auth State Changed (Anonymous). User ID:", userId);
+                                console.log("Anonymous User ID:", userId);
                                 resolve();
                             }).catch(err => {
                                  console.error("Anonymous sign-in failed:", err);
                                  userId = 'guest-' + crypto.randomUUID().substring(0, 8);
-                                 resolve(); // Selesaikan juga jika gagal
+                                 resolve();
                             });
                         }
                     };
                     
                     const unsubscribe = onAuthStateChanged(auth, (user) => {
-                        unsubscribe(); // Hentikan listener
-                        
+                        unsubscribe(); 
                         if (initialAuthToken) {
                             signInWithCustomToken(auth, initialAuthToken).then(cred => {
                                 userId = cred.user.uid;
-                                console.log("Firebase Auth (Custom Token). User ID:", userId);
                                 resolve();
                             }).catch(err => {
                                 console.warn("Custom token failed, trying anonymous.", err);
-                                authCallback(null); // Fallback ke anonim
+                                authCallback(null);
                             });
                         } else {
-                            authCallback(user); // Panggil handler standar
+                            authCallback(user);
                         }
                     });
-                    
                 } catch (error) {
                     console.error("Kesalahan saat inisialisasi Firebase:", error);
                     userId = 'guest-error-' + crypto.randomUUID().substring(0, 8);
-                    resolve(); // Selesaikan promise agar app tidak macet
+                    resolve();
                 }
             });
         }
         
-        // --- 2. NAVIGASI STATE ---
+        // --- 2. NAVIGASI STATE (MODIFIKASI REFRESH DATA) ---
         function navigate(page) {
             localStorage.setItem('currentPage', page);
-            // Bersihkan state ID Palet saat pindah halaman
             if (page !== 'transaksiPalet') {
                 selectedPalletIds = [];
             }
+            
+            // (FITUR BARU) Reset Flag Data untuk memaksa Refresh dari Database
+            isMasterDataFetched = false;
+            isHistoryDataFetched = false;
+            isAmbangBatasDataFetched = false;
+            
+            // (Opsional) Kosongkan data lokal agar terlihat loading (visual feedback)
+            masterPalletData = [];
+            historyPalletData = [];
+            ambangBatasData = [];
+            
             renderApp(page);
         }
 
         // --- 3. RENDERING UTAMA ---
-        /**
-         * (MODIFIKASI) Render App
-         * Menambahkan 'analyticsDashboard' dan memanggil loader data.
-         */
         function renderApp(page) {
             const container = document.getElementById('app-container');
             
-            // Proteksi halaman: Jika halaman bukan login dan user tidak ada, paksa ke login
+            // Proteksi halaman
             if (page !== 'login' && !currentUser) {
-                console.log("User not authenticated. Redirecting to login.");
                 page = 'login';
             }
             
-            container.innerHTML = ''; // Bersihkan konten
+            container.innerHTML = ''; 
 
             switch (page) {
                 case 'login':
@@ -258,25 +252,24 @@
                     break;
                 case 'masterPalet':
                     container.innerHTML = createMasterPalletView();
-                    fetchMasterPalletData(); // Panggil fungsi fetch data
+                    fetchMasterPalletData(); 
                     break;
                 case 'stockPalet':
-                    container.innerHTML = createStockPalletView(); // Panggil view baru
-                    fetchStockPalletData(); // Panggil fungsi fetch data baru
+                    container.innerHTML = createStockPalletView(); 
+                    fetchStockPalletData(); 
                     break;
                 case 'transaksiPalet':
                     selectedPalletIds = []; 
                     container.innerHTML = createTransactionPalletView();
-                    fetchMasterDataForTransaction(); // Panggil fungsi fetch data Master baru
+                    fetchMasterDataForTransaction(); 
                     break;
                 case 'historyPalet':
                     container.innerHTML = createHistoryPalletView();
                     fetchHistoryPalletData();
                     break;
-                // (BARU) Halaman Dashboard Analitik
                 case 'analyticsDashboard':
                     container.innerHTML = createAnalyticsDashboardView();
-                    loadAnalyticsData(); // Panggil loader data analitik
+                    loadAnalyticsData(); 
                     break;
                 case 'stoPalet':
                     container.innerHTML = createPlaceholderView('STO Palet', 'Stock Taking Palet');
@@ -284,25 +277,51 @@
                 case 'dashboard':
                 default:
                     container.innerHTML = createDashboardView();
-                    // (BARU) Panggil loader untuk notifikasi stok kritis
                     loadDashboardData(); 
                     break;
             }
         }
         
-        // --- HELPER: Mendapatkan ID pesan status berdasarkan judul ---
         function getStatusMessageId(title) {
             return `status-message-${title.toLowerCase().replace(/\s/g, '-')}`;
         }
 
+        // --- FUNGSI HEADER UNIVERSAL DENGAN USERNAME ---
+        function createHeader(title, backPage) {
+             const username = currentUser ? currentUser.username : 'Guest';
+             const role = currentUser ? currentUser.role : 'User';
+             
+             return `
+                <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-gray-700 pb-3" id="header-${title.toLowerCase().replace(/\s/g, '-')}">
+                    <div class="flex items-center mb-3 md:mb-0">
+                        <button onclick="navigate('${backPage}')" class="text-gray-400 hover:text-green-400 transition mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z"></path></svg>
+                        </button>
+                        <div>
+                            <h1 class="text-2xl font-bold text-green-400">${title}</h1>
+                            <span id="${getStatusMessageId(title)}" class="text-xs text-gray-500 block mt-1">Siap mencatat</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Tampilan User di Pojok Atas (Setiap Halaman) -->
+                    <div class="flex items-center text-sm text-gray-400 bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700">
+                        <span class="mr-2">
+                            User: <span class="font-bold text-green-400">${username}</span> 
+                            <span class="text-xs text-gray-500">(${role})</span>
+                        </span>
+                        <button onclick="handleLogout()" title="Logout" class="ml-2 p-1 text-gray-400 hover:text-red-500 transition border-l border-gray-600 pl-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </header>
+            `;
+        }
 
-        // --- 4. TAMPILAN DASHBOARD (Menu Utama) ---
-        /**
-         * (MODIFIKASI) createDashboardView
-         * Menambahkan kartu "Dashboard Analitik" dan kontainer notifikasi.
-         */
+
+        // --- 4. TAMPILAN DASHBOARD ---
         function createDashboardView() {
-            // Fallback jika currentUser tiba-tiba null
             const username = currentUser ? currentUser.username : '...';
             const role = currentUser ? currentUser.role : '...';
 
@@ -315,161 +334,98 @@
                             </svg>
                             <h1 class="text-3xl font-bold text-gray-100 uppercase">Control Palet Hanwa</h1>
                         </div>
-                        <!-- Tampilan User dan Tombol Logout -->
-                        <div class="flex items-center text-sm text-gray-400">
+                        <!-- Tampilan User Dashboard -->
+                        <div class="flex items-center text-sm text-gray-400 bg-zinc-800 px-4 py-2 rounded-lg">
                             <span class="mr-3 hidden sm:inline">User: <span class="font-bold text-green-400">${username}</span> (${role})</span>
-                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.939 13.939 0 0112 16c2.585 0 5.043.682 7.079 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            <!-- Tombol Logout -->
-                            <button onclick="handleLogout()" title="Logout" class="ml-2 p-1 rounded-full hover:bg-zinc-700 transition">
-                                <svg class="w-6 h-6 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                                </svg>
+                            <button onclick="handleLogout()" title="Logout" class="ml-2 p-1 rounded-full hover:bg-zinc-700 transition text-red-400">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                             </button>
                         </div>
                     </header>
                     
-                    <!-- (BARU) Kontainer Notifikasi Stok Kritis -->
-                    <div id="critical-stock-alert-container" class="mb-6">
-                        <!-- Notifikasi akan di-inject di sini oleh checkAndDisplayCriticalStock() -->
-                    </div>
+                    <div id="critical-stock-alert-container" class="mb-6"></div>
 
-
-                    <!-- Grid Menu Utama (6 item, 3 kolom di md, 3 di lg) -->
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-                        
-                        <!-- MASTER PALET -->
+                        <!-- Menu Cards -->
                         <div onclick="navigate('masterPalet')" class="menu-card rounded-xl p-8 shadow-xl">
-                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10m-4-11l-4 2.12V17M16 12l4 2.12V17"></path>
-                            </svg>
-                            <div class="text-center">
-                                <h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Master Palet</h2>
-                                <p class="text-sm text-gray-400">Data Induk Palet</p>
-                            </div>
+                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10m-4-11l-4 2.12V17M16 12l4 2.12V17"></path></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Master Palet</h2><p class="text-sm text-gray-400">Data Induk Palet</p></div>
                         </div>
 
-                        <!-- STOCK PALET -->
                         <div onclick="navigate('stockPalet')" class="menu-card rounded-xl p-8 shadow-xl">
-                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 12V3h16v9m-4-4l-4 4-4-4m8 8h-8v4h8v-4z"></path>
-                            </svg>
-                            <div class="text-center">
-                                <h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Stock Palet</h2>
-                                <p class="text-sm text-gray-400">Ringkasan Stok Palet</p>
-                            </div>
+                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 12V3h16v9m-4-4l-4 4-4-4m8 8h-8v4h8v-4z"></path></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Stock Palet</h2><p class="text-sm text-gray-400">Ringkasan Stok Palet</p></div>
                         </div>
 
-                        <!-- TRANSAKSI PALET -->
                         <div onclick="navigate('transaksiPalet')" class="menu-card rounded-xl p-8 shadow-xl">
-                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-1.447 3.382l-.675.337M4 12a7 7 0 1014 0 7 7 0 01-14 0z"></path>
-                            </svg>
-                            <div class="text-center">
-                                <h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Transaksi Palet</h2>
-                                <p class="text-sm text-gray-400">Log Pergerakan Palet</p>
-                            </div>
+                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-1.447 3.382l-.675.337M4 12a7 7 0 1014 0 7 7 0 01-14 0z"></path></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Transaksi Palet</h2><p class="text-sm text-gray-400">Log Pergerakan Palet</p></div>
                         </div>
                         
-                        <!-- (BARU) DASHBOARD ANALITIK -->
                         <div onclick="navigate('analyticsDashboard')" class="menu-card rounded-xl p-8 shadow-xl">
-                             <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path>
-                            </svg>
-                            <div class="text-center">
-                                <h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Dashboard Analitik</h2>
-                                <p class="text-sm text-gray-400">Grafik & Wawasan Palet</p>
-                            </div>
+                             <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Dashboard Analitik</h2><p class="text-sm text-gray-400">Grafik & Wawasan Palet</p></div>
                         </div>
 
-                        <!-- HISTORY PALET -->
                         <div onclick="navigate('historyPalet')" class="menu-card rounded-xl p-8 shadow-xl">
-                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            <div class="text-center">
-                                <h2 class="text-xl font-bold uppercase mb-1 text-gray-100">History Palet</h2>
-                                <p class="text-sm text-gray-400">Log Transaksi Palet</p>
-                            </div>
+                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">History Palet</h2><p class="text-sm text-gray-400">Log Transaksi Palet</p></div>
                         </div>
 
-                        <!-- STO PALET (Placeholder) -->
                         <div onclick="navigate('stoPalet')" class="menu-card rounded-xl p-8 shadow-xl">
-                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                            </svg>
-                            <div class="text-center">
-                                <h2 class="text-xl font-bold uppercase mb-1 text-gray-100">STO Palet</h2>
-                                <p class="text-sm text-gray-400">Stock Taking Palet</p>
-                            </div>
+                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">STO Palet</h2><p class="text-sm text-gray-400">Stock Taking Palet</p></div>
                         </div>
-
                     </div>
                     
                     <footer class="mt-12 text-center text-xs text-grey-600">
-                        Aplikasi Kontrol Palet (v4.0 Analitik) - Elaborated by SOPARI-HSSI0293
+                        Aplikasi Kontrol Palet (v4.5 Refresh Data & History A-K) - Elaborated by SOPARI-HSSI0293
                     </footer>
                 </div>
             `;
         }
         
         // --- 5. SETUP GOOGLE SHEET URLS ---
-        
-        const GOOGLE_SHEET_ID = '1YiIDIa0Ysi-O0k4askOtd8Qf66KnQuJxlLMngDlqM1A'; // GANTI dengan ID Google Sheet Anda
+        const GOOGLE_SHEET_ID = '1YiIDIa0Ysi-O0k4askOtd8Qf66KnQuJxlLMngDlqM1A'; 
         const MASTER_SHEET_NAME = 'MASTER PALET'; 
         const STOCK_SHEET_NAME = 'Ringkasan Stok Palet'; 
         const TRANSACTION_SHEET_NAME = 'Log Transaksi Palet Batch'; 
         const USERCONTROL_SHEET_NAME = 'Usercontrol';
-        const AMBANG_BATAS_SHEET_NAME = 'Ambang Batas'; // (BARU) Sesuai permintaan Anda
+        const AMBANG_BATAS_SHEET_NAME = 'Ambang Batas'; 
         const RANGE = 'A:H'; 
+        const HISTORY_RANGE = 'A:K'; // (BARU) Range diperluas untuk History
 
         const MASTER_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${MASTER_SHEET_NAME}&range=${RANGE}`;
         const STOCK_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STOCK_SHEET_NAME}&range=${RANGE}`;
-        const HISTORY_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${TRANSACTION_SHEET_NAME}&range=${RANGE}`;
+        // (UPDATE) Menggunakan HISTORY_RANGE (A:K)
+        const HISTORY_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${TRANSACTION_SHEET_NAME}&range=${HISTORY_RANGE}`;
         const USERCONTROL_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${USERCONTROL_SHEET_NAME}&range=A:C`;
-        // (BARU) URL untuk sheet Ambang Batas (Kolom A, B, C)
         const AMBANG_BATAS_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${AMBANG_BATAS_SHEET_NAME}&range=A:C`;
         
         const MOCK_API_DEPLOY_URL = 'https://script.google.com/macros/s/AKfycbwiq9RP1jZykmw8a4W1PNgoUgfekOxCkAiHhnLtzFX8YB1I8TTPnzgkhNYQZH6I-MZJ/exec'; 
 
-        // --- 6. FUNGSI FETCH DATA (MODIFIKASI) ---
-        
-        /**
-         * (MODIFIKASI) Fungsi fetch universal.
-         * Sekarang lebih generik, hanya mengambil data.
-         */
+        // --- 6. FUNGSI FETCH DATA ---
         async function fetchSheetData(url) {
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`Status ${response.status}`);
-                
                 const text = await response.text();
                 const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
                 const data = JSON.parse(jsonText);
-                
-                if (data.status !== 'ok') {
-                    throw new Error(`Query error: ${data.errors ? data.errors[0].message : 'Unknown error'}`);
-                }
-
+                if (data.status !== 'ok') throw new Error(`Query error: ${data.errors ? data.errors[0].message : 'Unknown error'}`);
                 return parseGVizData(data);
-                
             } catch (error) {
                 console.error("Kesalahan saat mengambil data Google Sheet:", error, url);
-                throw error; // Lempar error agar pemanggil bisa menangani
+                throw error;
             }
         }
         
-        /**
-         * Mengurai struktur data GViz menjadi array objek JavaScript yang sederhana.
-         * (MODIFIKASI v4.2)
-         */
         function parseGVizData(data) {
             const columns = data.table.cols.map(col => ({
                 id: col.id,
-                // (FIX) Normalisasi semua label header ke HURUF BESAR & trim spasi
+                // Normalisasi semua label header ke HURUF BESAR & trim spasi
                 label: (col.label || col.id).toUpperCase().trim()  
-            })).filter(col => col.label); // Hilangkan kolom tanpa label
+            })).filter(col => col.label); 
 
             const rows = data.table.rows;
             const result = [];
@@ -478,20 +434,15 @@
                 for (const row of rows) {
                     const rowObject = {};
                     for (let i = 0; i < columns.length; i++) {
-                        // (FIX) colLabel sekarang dijamin HURUF BESAR
                         const colLabel = columns[i].label;
                         rowObject[colLabel] = row.c[i] ? (row.c[i].f || row.c[i].v) : '';
                     }
                     result.push(rowObject);
                 }
             }
-            
-            // (FIX) Headers yang dikembalikan juga sekarang HURUF BESAR
             return { data: result, headers: columns.map(c => c.label) };
         }
         
-        // (BARU) Fungsi "silent fetch" untuk data Master.
-        // Hanya mengambil data jika belum ada, lalu menyimpannya di state global.
         async function fetchMasterData() {
             if (isMasterDataFetched) return;
             try {
@@ -499,14 +450,12 @@
                 masterPalletData = parsedData.data;
                 masterPalletHeaders = parsedData.headers;
                 isMasterDataFetched = true;
-                console.log("Data Master Palet dimuat.", masterPalletData.length);
             } catch (error) {
                 console.error("Gagal memuat Master Data:", error);
-                isMasterDataFetched = false; // Izinkan retry
+                isMasterDataFetched = false; 
             }
         }
 
-        // (BARU) Fungsi "silent fetch" untuk data History.
         async function fetchHistoryData() {
             if (isHistoryDataFetched) return;
             try {
@@ -514,21 +463,18 @@
                 historyPalletData = parsedData.data;
                 historyPalletHeaders = parsedData.headers;
                 isHistoryDataFetched = true;
-                console.log("Data History Palet dimuat.", historyPalletData.length);
             } catch (error) {
                 console.error("Gagal memuat History Data:", error);
                 isHistoryDataFetched = false;
             }
         }
 
-        // (BARU) Fungsi "silent fetch" untuk data Ambang Batas.
         async function fetchAmbangBatasData() {
             if (isAmbangBatasDataFetched) return;
             try {
                 const parsedData = await fetchSheetData(AMBANG_BATAS_URL);
                 ambangBatasData = parsedData.data;
                 isAmbangBatasDataFetched = true;
-                console.log("Data Ambang Batas dimuat.", ambangBatasData.length);
             } catch (error) {
                 console.error("Gagal memuat Ambang Batas Data:", error);
                 isAmbangBatasDataFetched = false;
@@ -536,45 +482,26 @@
         }
 
 
-        // --- (BARU) LOGIC UNTUK LOGIN ---
-        
-        /**
-         * (BARU) Membuat tampilan Login
-         */
+        // --- LOGIC UNTUK LOGIN ---
         function createLoginView() {
             return `
                 <div class="login-view app-view">
                     <div class="login-card w-full max-w-sm p-8 rounded-lg shadow-2xl">
                         <div class="flex items-center justify-center mb-6">
-                            <svg class="w-10 h-10 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10M10 7v10M16 7v10M20 4v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h12a2 2 0 012 2z"></path>
-                            </svg>
+                            <svg class="w-10 h-10 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10M10 7v10M16 7v10M20 4v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h12a2 2 0 012 2z"></path></svg>
                             <h1 class="text-2xl font-bold text-gray-100 uppercase">Control Palet</h1>
                         </div>
-                        
                         <form id="login-form" onsubmit="handleLogin(event)">
-                            <div class="mb-4">
-                                ${createFormInput('Username', 'loginUsername', 'text', true, 'Masukkan username...')}
-                            </div>
-                            <div class="mb-6">
-                                ${createFormInput('Password', 'loginPassword', 'password', true, 'Masukkan password...')}
-                            </div>
-                            
-                            <!-- Kotak Pesan Error Login -->
+                            <div class="mb-4">${createFormInput('Username', 'loginUsername', 'text', true, 'Masukkan username...')}</div>
+                            <div class="mb-6">${createFormInput('Password', 'loginPassword', 'password', true, 'Masukkan password...')}</div>
                             <div id="login-error-message" class="hidden p-3 rounded-lg text-sm mb-4 font-medium bg-red-800 text-white" role="alert"></div>
-
-                            <button type="submit" id="login-submit-btn" class="btn-primary w-full bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition">
-                                Login
-                            </button>
+                            <button type="submit" id="login-submit-btn" class="btn-primary w-full bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition">Login</button>
                         </form>
                     </div>
                 </div>
             `;
         }
         
-        /**
-         * (BARU) Handle proses login
-         */
         async function handleLogin(event) {
             event.preventDefault();
             const usernameEl = document.getElementById('loginUsername');
@@ -583,7 +510,6 @@
             const submitBtn = document.getElementById('login-submit-btn');
 
             if (!usernameEl || !passwordEl || !errorBox || !submitBtn) return;
-            
             const username = usernameEl.value.trim();
             const password = passwordEl.value.trim();
             
@@ -598,21 +524,17 @@
             errorBox.classList.add('hidden');
 
             try {
-                // Ambil data dari sheet 'Usercontrol'
                 const parsedData = await fetchSheetData(USERCONTROL_URL);
                 const { data, headers } = parsedData;
                 
                 if (headers.length < 3) {
-                    errorBox.textContent = "Format sheet 'Usercontrol' salah. Butuh 3 kolom (Username, Password, Role).";
+                    errorBox.textContent = "Format sheet salah. Butuh 3 kolom (Username, Password, Role).";
                     errorBox.classList.remove('hidden');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = "Login";
-                    return;
+                    submitBtn.disabled = false; submitBtn.textContent = "Login"; return;
                 }
 
-                const userCol = headers[0]; // Kolom A (cth: "Username" atau "username")
-                const passCol = headers[1]; // Kolom B (cth: "Password" atau "password")
-                const roleCol = headers[2]; // Kolom C (cth: "Role" atau "role")
+                const userCol = headers[0]; 
+                const passCol = headers[1]; 
 
                 const foundUser = data.find(user => 
                     String(user[userCol] || '').trim() === username &&
@@ -620,236 +542,135 @@
                 );
                 
                 if (foundUser) {
-                    // SUKSES LOGIN
-                    console.log("Login sukses:", foundUser);
+                    const roleCol = headers[2];
                     currentUser = { 
                         username: String(foundUser[userCol]).trim(), 
                         role: String(foundUser[roleCol] || 'User').trim() 
                     };
-                    
-                    // Simpan di session storage
                     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    // Inisialisasi Firebase (penting untuk userId)
                     await initializeFirebase();
-                    
-                    // Reset cache data
-                    isMasterDataFetched = false;
-                    isHistoryDataFetched = false;
-                    isAmbangBatasDataFetched = false;
-                    
-                    // Render dashboard
+                    // Reset cache
+                    masterPalletData = []; historyPalletData = []; ambangBatasData = [];
+                    isMasterDataFetched = false; isHistoryDataFetched = false; isAmbangBatasDataFetched = false;
                     renderApp('dashboard');
-                    
                 } else {
-                    // GAGAL LOGIN
                     errorBox.textContent = "Username atau Password salah.";
                     errorBox.classList.remove('hidden');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = "Login";
+                    submitBtn.disabled = false; submitBtn.textContent = "Login";
                 }
             } catch (error) {
                 console.error("Gagal fetch data user:", error);
                 errorBox.textContent = "Gagal terhubung ke server. Periksa koneksi Anda.";
                 errorBox.classList.remove('hidden');
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Login";
+                submitBtn.disabled = false; submitBtn.textContent = "Login";
             }
         }
         
-        /**
-         * (BARU) Handle proses logout
-         */
         function handleLogout() {
-            console.log("Logging out...");
-            // Hapus data sesi
             sessionStorage.removeItem('currentUser');
             localStorage.removeItem('currentPage');
             currentUser = null;
-            
-            // Reset state Firebase
-            if (auth) {
-                signOut(auth);
-            }
-            auth = null;
-            db = null;
-            userId = null;
-            
-            // Reset data cache
-            masterPalletData = [];
-            historyPalletData = [];
-            ambangBatasData = [];
-            isMasterDataFetched = false;
-            isHistoryDataFetched = false;
-            isAmbangBatasDataFetched = false;
-            
-            // Kembali ke login
+            if (auth) signOut(auth);
+            auth = null; db = null; userId = null;
+            masterPalletData = []; historyPalletData = []; ambangBatasData = [];
+            isMasterDataFetched = false; isHistoryDataFetched = false; isAmbangBatasDataFetched = false;
             renderApp('login');
         }
         
-        /**
-         * (BARU) Memeriksa status login saat memuat halaman
-         */
         async function checkSessionAndRender() {
             const storedUser = sessionStorage.getItem('currentUser');
-            
             if (storedUser) {
-                console.log("Sesi ditemukan, melanjutkan...");
                 currentUser = JSON.parse(storedUser);
-                // Inisialisasi Firebase
                 await initializeFirebase();
-                // Render halaman terakhir atau dashboard
                 renderApp(localStorage.getItem('currentPage') || 'dashboard');
             } else {
-                console.log("Tidak ada sesi, menampilkan login.");
-                // Hanya render login, tidak perlu tunggu Firebase
                 renderApp('login');
             }
         }
 
 
-        // --- 7. LOGIC UNTUK MASTER PALET (Tabel Detail) ---
+        // --- 7. MASTER PALET ---
         const MASTER_PALET_TITLE = 'Master Palet';
 
         function createMasterPalletView() {
             return `
                 <div id="master-pallet-view" class="app-view p-6">
                     ${createHeader(MASTER_PALET_TITLE, 'dashboard')}
-
                     <h2 class="text-xl font-bold text-gray-300 mb-3 border-b border-gray-800 pb-2">Detail Data Palet</h2>
                     <div id="table-container" class="shadow-lg rounded-xl overflow-x-auto">
                         <table id="pallet-table-master" class="pallet-table min-w-full divide-y divide-gray-700 rounded-xl">
-                            <thead class="bg-gray-800">
-                                <!-- Konten header (judul dan filter) akan diisi oleh fetchMasterPalletData -->
-                            </thead>
+                            <thead class="bg-gray-800"></thead>
                             <tbody class="divide-y divide-gray-700"></tbody>
                         </table>
                     </div>
-
                     <div id="error-box-master" class="hidden mt-4 p-4 rounded-lg bg-red-800 text-white font-semibold"></div>
                 </div>
             `;
         }
 
-        /**
-         * (MODIFIKASI) fetchMasterPalletData
-         * Sekarang menggunakan data cache jika ada, atau memanggil fetchMasterData() jika tidak.
-         */
         async function fetchMasterPalletData() {
             const statusMessageEl = document.getElementById(getStatusMessageId(MASTER_PALET_TITLE)); 
             const tableHeadEl = document.querySelector('#pallet-table-master thead');
             const tableBodyEl = document.querySelector('#pallet-table-master tbody');
             const errorBoxEl = document.getElementById('error-box-master');
-            
             if (!statusMessageEl || !tableHeadEl || !tableBodyEl) return; 
             
             try {
                 tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Memuat data...</td></tr>';
                 if (statusMessageEl) statusMessageEl.textContent = 'Memuat data...';
 
-                // Panggil silent fetcher jika data belum ada
-                if (!isMasterDataFetched) {
-                    await fetchMasterData();
-                }
-                
-                // Gunakan data dari state global
+                if (!isMasterDataFetched) await fetchMasterData();
                 const data = masterPalletData; 
                 const headers = masterPalletHeaders; 
                 
                 if (data.length === 0) {
                     statusMessageEl.textContent = "Data tidak ditemukan.";
                     tableHeadEl.innerHTML = '';
-                    tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data Master Palet yang tersedia.</td></tr>';
+                    tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data.</td></tr>';
                     return;
                 }
-
                 statusMessageEl.textContent = `${data.length} Data Palet Ditemukan`;
-
-                // Render baris header dan baris filter
-                const headerRow = `
-                    <tr class="bg-gray-800">
-                        ${headers.map(header => 
-                            `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`
-                        ).join('')}
-                    </tr>
-                `;
-
-                const filterRow = `
-                    <tr class="bg-gray-800">
-                        ${headers.map(header => `
-                            <th class="p-1 align-top">
-                                <input type="text" 
-                                       class="w-full px-2 py-1 text-xs bg-zinc-700 border border-zinc-600 rounded text-white placeholder-zinc-400 focus:ring-green-500 focus:border-green-500 master-filter-input" 
-                                       placeholder="Filter..."
-                                       data-header="${header}"
-                                       onkeyup="filterMasterPalletTable()">
-                            </th>
-                        `).join('')}
-                    </tr>
-                `;
+                const headerRow = `<tr class="bg-gray-800">${headers.map(header => `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`).join('')}</tr>`;
+                const filterRow = `<tr class="bg-gray-800">${headers.map(header => `<th class="p-1 align-top"><input type="text" class="w-full px-2 py-1 text-xs bg-zinc-700 border border-zinc-600 rounded text-white placeholder-zinc-400 focus:ring-green-500 focus:border-green-500 master-filter-input" placeholder="Filter..." data-header="${header}" onkeyup="filterMasterPalletTable()"></th>`).join('')}</tr>`;
                 
                 tableHeadEl.innerHTML = headerRow + filterRow;
                 renderMasterPalletTableBody(data);
-                
             } catch (error) {
                  if (statusMessageEl) statusMessageEl.textContent = 'Gagal memuat data.';
-                 if (errorBoxEl) {
-                    errorBoxEl.textContent = `🚨 GAGAL MEMUAT DATA: ${error.message}.`;
-                    errorBoxEl.classList.remove('hidden');
-                }
+                 if (errorBoxEl) { errorBoxEl.textContent = `🚨 GAGAL MEMUAT DATA: ${error.message}.`; errorBoxEl.classList.remove('hidden'); }
             }
         }
         
-        /**
-         * Fungsi terpisah untuk me-render <tbody> tabel Master Palet
-         */
         function renderMasterPalletTableBody(data) {
             const tableBodyEl = document.querySelector('#pallet-table-master tbody');
             if (!tableBodyEl) return;
-            
             const headersCount = masterPalletHeaders.length || 10;
 
             if (data.length === 0) {
-                tableBodyEl.innerHTML = `<tr><td colspan="${headersCount}" class="text-center py-4 text-gray-500">Data tidak ditemukan untuk filter ini.</td></tr>`;
+                tableBodyEl.innerHTML = `<tr><td colspan="${headersCount}" class="text-center py-4 text-gray-500">Data tidak ditemukan.</td></tr>`;
                 return;
             }
 
             tableBodyEl.innerHTML = data.map((item, index) => {
-                // (FIX) Menggunakan header HURUF BESAR
                 const status = item['STATUS'] || '';
                 const lokasi = item['LOKASI'] || '';
-
                 const rowColorClass = getRowColorClass(status, lokasi);
                 const rowBgClass = (index % 2 === 0 ? 'bg-zinc-800' : 'bg-zinc-700');
-                
-                return `
-                    <tr class="${rowBgClass} ${rowColorClass}">
-                        ${masterPalletHeaders.map(header => 
-                            `<td class="px-6 py-3 whitespace-nowrap text-sm">${item[header] || '-'}</td>`
-                        ).join('')}
-                    </tr>
-                `;
+                return `<tr class="${rowBgClass} ${rowColorClass}">${masterPalletHeaders.map(header => `<td class="px-6 py-3 whitespace-nowrap text-sm">${item[header] || '-'}</td>`).join('')}</tr>`;
             }).join('');
         }
         
-        /**
-         * Fungsi untuk memfilter dan me-render ulang tabel master palet
-         */
         function filterMasterPalletTable() {
             const filterInputs = document.querySelectorAll('#pallet-table-master .master-filter-input');
             const filters = {};
-
             filterInputs.forEach(input => {
                 const header = input.dataset.header;
                 const value = input.value.toUpperCase().trim();
-                if (value) {
-                    filters[header] = value;
-                }
+                if (value) filters[header] = value;
             });
 
             const filterKeys = Object.keys(filters);
             let filteredData = masterPalletData; 
-
             if (filterKeys.length > 0) {
                 filteredData = masterPalletData.filter(item => {
                     return filterKeys.every(header => {
@@ -858,40 +679,26 @@
                     });
                 });
             }
-            
             renderMasterPalletTableBody(filteredData);
         }
 
         function getRowColorClass(status, lokasi) {
             const s = String(status).toUpperCase().trim();
             const l = String(lokasi).toUpperCase().trim();
-
-            if (s === 'KOSONG' && l === 'AREA PALET') {
-                return 'color-green'; 
-            }
-            if (s === 'TERISI' && (l === 'AREA PRODUCT' || l === 'GUDANG')) {
-                return 'color-orange'; 
-            }
-            if (s === 'TERISI' && l === 'CUSTOMER') {
-                return 'color-red'; 
-            }
+            if (s === 'KOSONG' && l === 'AREA PALET') return 'color-green'; 
+            if (s === 'TERISI' && (l === 'AREA PRODUCT' || l === 'GUDANG')) return 'color-orange'; 
+            if (s === 'TERISI' && l === 'CUSTOMER') return 'color-red'; 
             return 'text-gray-200'; 
         }
         
-        // --- 8. LOGIC UNTUK STOCK PALET (Ringkasan/Total) ---
+        // --- 8. STOCK PALET ---
         const STOCK_PALET_TITLE = 'Stock Palet';
-
         function createStockPalletView() {
             return `
                 <div id="stock-pallet-view" class="app-view p-6">
                     ${createHeader(STOCK_PALET_TITLE, 'dashboard')}
-
-                    <h2 class="text-xl font-bold text-gray-300 mb-4 border-b border-gray-800 pb-2">Ringkasan Stok Palet Berdasarkan Lokasi</h2>
-                    
-                    <div id="stock-summary-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <!-- Kartu akan diisi di sini -->
-                    </div>
-
+                    <h2 class="text-xl font-bold text-gray-300 mb-4 border-b border-gray-800 pb-2">Ringkasan Stok Palet</h2>
+                    <div id="stock-summary-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6"></div>
                     <h2 class="text-xl font-bold text-gray-300 mb-3 border-b border-gray-800 pb-2">Detail Data Ringkasan</h2>
                     <div id="table-container-stock" class="shadow-lg rounded-xl overflow-x-auto">
                         <table id="pallet-table-stock" class="pallet-table min-w-full divide-y divide-gray-700 rounded-xl">
@@ -899,20 +706,16 @@
                             <tbody class="divide-y divide-gray-700"></tbody>
                         </table>
                     </div>
-
                     <div id="error-box-stock" class="hidden mt-4 p-4 rounded-lg bg-red-800 text-white font-semibold"></div>
                 </div>
             `;
         }
 
-        // (MODIFIKASI) fetchStockPalletData: Dibuat lebih sederhana, tidak lagi memanggil fetchSheetData
         async function fetchStockPalletData() {
             const statusMessageEl = document.getElementById(getStatusMessageId(STOCK_PALET_TITLE));
             const summaryContainerEl = document.getElementById('stock-summary-container');
             const tableHeaderEl = document.querySelector('#pallet-table-stock thead tr');
             const tableBodyEl = document.querySelector('#pallet-table-stock tbody');
-            const errorBoxEl = document.getElementById('error-box-stock');
-            
             if (!statusMessageEl || !summaryContainerEl || !tableHeaderEl || !tableBodyEl) return; 
 
             summaryContainerEl.innerHTML = createSummaryCardPlaceholder('Memuat...', 'Total Palet Hanwa');
@@ -920,125 +723,73 @@
             tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Memuat data...</td></tr>';
             
             try {
-                // (MODIFIKASI) Langsung panggil fetchSheetData
                 const parsedData = await fetchSheetData(STOCK_PALLET_URL);
                 const { data, headers } = parsedData;
                 
                 if (data.length === 0) {
-                    statusMessageEl.textContent = "Data ringkasan stok tidak ditemukan.";
-                    tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data Ringkasan Stok Palet yang tersedia.</td></tr>';
+                    statusMessageEl.textContent = "Data tidak ditemukan.";
+                    tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data.</td></tr>';
                     summaryContainerEl.innerHTML = createSummaryCardPlaceholder(0, 'Total Palet Hanwa');
                     return;
                 }
-
                 statusMessageEl.textContent = `${data.length} Baris Ringkasan Ditemukan`;
-
                 const totalIndex = headers.length > 0 ? headers.findIndex(h => h.toUpperCase().includes('TOTAL')) : -1;
                 let grandTotal = 0;
-                
                 data.forEach(item => {
                     const totalValue = totalIndex >= 0 ? parseFloat(String(Object.values(item)[totalIndex]).replace(/[^0-9.,]/g, '').replace(',', '.') || 0) : 0;
                     grandTotal += totalValue;
                 });
 
                 summaryContainerEl.innerHTML = createSummaryCard(grandTotal.toLocaleString('id-ID'), 'Total Palet Hanwa', 'text-green-400');
-
-                tableHeaderEl.innerHTML = headers.map(header => 
-                    `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`
-                ).join('');
-
+                tableHeaderEl.innerHTML = headers.map(header => `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`).join('');
                 tableBodyEl.innerHTML = data.map((item, index) => {
                     const rowBgClass = (index % 2 === 0 ? 'bg-zinc-800' : 'bg-zinc-700');
-                    return `
-                        <tr class="${rowBgClass} text-gray-200">
-                            ${headers.map(header => 
-                                `<td class="px-6 py-3 whitespace-nowrap text-sm">${item[header] || '-'}</td>`
-                            ).join('')}
-                        </tr>
-                    `;
+                    return `<tr class="${rowBgClass} text-gray-200">${headers.map(header => `<td class="px-6 py-3 whitespace-nowrap text-sm">${item[header] || '-'}</td>`).join('')}</tr>`;
                 }).join('');
-                
             } catch (error) {
                  if (statusMessageEl) statusMessageEl.textContent = 'Gagal memuat data.';
-                 if (errorBoxEl) {
-                    errorBoxEl.textContent = `🚨 GAGAL MEMUAT DATA: ${error.message}.`;
-                    errorBoxEl.classList.remove('hidden');
-                }
             }
         }
 
-        // --- 9. LOGIC UNTUK TRANSAKSI PALET (Form Input) ---
+        // --- 9. TRANSAKSI PALET ---
         const TRANSACTION_PALET_TITLE = 'Transaksi Palet';
 
-        /**
-         * (MODIFIKASI) createTransactionPalletView
-         * Mengganti textarea 'Keterangan' menjadi dropdown 'Kondisi'.
-         */
         function createTransactionPalletView() {
             const today = new Date().toISOString().split('T')[0];
-            
             return `
                 <div id="transaction-pallet-view" class="app-view p-6 max-w-4xl mx-auto">
                     ${createHeader(TRANSACTION_PALET_TITLE, 'dashboard')}
-
                     <div class="bg-zinc-800 p-6 sm:p-8 rounded-xl shadow-2xl">
-                        <p class="text-sm text-gray-400 mb-6">
-                            Gunakan formulir ini untuk mencatat pergerakan <span class="font-bold text-green-300">beberapa</span> palet sekaligus.
-                        </p>
-
+                        <p class="text-sm text-gray-400 mb-6">Gunakan formulir ini untuk mencatat pergerakan <span class="font-bold text-green-300">beberapa</span> palet sekaligus.</p>
                         <div id="transaction-message-box" class="hidden p-3 rounded-lg text-sm mb-4 font-medium" role="alert"></div>
-
                         <form id="transaction-form" onsubmit="submitTransaction(event)">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                                
-                                <div>
-                                    ${createFormSelect('Nama Palet', 'namaPalet', [], true, 'updateSizePallet')}
-                                </div>
-                                
-                                <div>
-                                    ${createFormSelect('Size Palet', 'sizePalet', [], true, 'renderPalletIdCards')}
-                                </div>
-
-                                <div>
-                                    ${createFormInput('Tanggal Transaksi', 'tanggalTransaksi', 'date', true, '', today)}
-                                </div>
-                                
-                                <div>
-                                    ${createFormSelect('Jenis Transaksi', 'jenisTransaksi', [
-                                        { value: 'DIGUNAKAN PRODUKSI', label: 'di Gunakan Produksi' },
-                                        { value: 'KELUAR HANWA', label: 'Keluar Hanwa (Pengiriman)' },
-                                        { value: 'MASUK HANWA', label: 'Masuk Hanwa (Penerimaan)' }
-                                    ], true)}
-                                </div>
-                                
-                                <!-- (MODIFIKASI) Mengganti textarea Keterangan menjadi dropdown Kondisi -->
-                                <div class="md:col-span-2">
-                                    ${createFormSelect('Kondisi Palet', 'kondisi', [
-                                        { value: 'Baik', label: 'Baik' },
-                                        { value: 'Rusak Ringan', label: 'Rusak Ringan' },
-                                        { value: 'Rusak Berat', label: 'Rusak Berat' }
-                                    ], true)}
-                                </div>
+                                <div>${createFormSelect('Nama Palet', 'namaPalet', [], true, 'updateSizePallet')}</div>
+                                <div>${createFormSelect('Size Palet', 'sizePalet', [], true, 'renderPalletIdCards')}</div>
+                                <div>${createFormInput('Tanggal Transaksi', 'tanggalTransaksi', 'date', true, '', today)}</div>
+                                <div>${createFormSelect('Jenis Transaksi', 'jenisTransaksi', [
+                                    { value: 'DIGUNAKAN PRODUKSI', label: 'di Gunakan Produksi' },
+                                    { value: 'KELUAR HANWA', label: 'Keluar Hanwa (Pengiriman)' },
+                                    { value: 'MASUK HANWA', label: 'Masuk Hanwa (Penerimaan)' }
+                                ], true)}</div>
+                                <div class="md:col-span-2">${createFormSelect('Kondisi Palet', 'kondisi', [
+                                    { value: 'Baik', label: 'Baik' },
+                                    { value: 'Rusak Ringan', label: 'Rusak Ringan' },
+                                    { value: 'Rusak Berat', label: 'Rusak Berat' }
+                                ], true)}</div>
                             </div>
-
                             <div class="mt-8">
                                 <h3 class="text-lg font-bold text-gray-300 mb-3 border-b border-gray-700 pb-1">1. Pilih ID Palet Tersedia <span id="selected-count" class="text-green-400 text-sm font-normal">(0 Palet Dipilih)</span></h3>
                                 <div id="pallet-id-card-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                                     <p class="text-gray-500 col-span-full" id="id-card-status">Pilih Nama Palet dan Size Palet terlebih dahulu.</p>
                                 </div>
                             </div>
-                            
                             <div class="mt-6 p-4 bg-gray-700 rounded-lg border border-green-500">
                                 <h4 class="text-sm font-semibold text-green-300 mb-2">2. ID Palet yang akan Diproses:</h4>
-                                <div id="selected-ids-display" class="flex flex-wrap gap-2 min-h-[2.5rem]">
-                                    <span class="text-gray-400 text-sm">Belum ada palet yang dipilih.</span>
-                                </div>
+                                <div id="selected-ids-display" class="flex flex-wrap gap-2 min-h-[2.5rem]"><span class="text-gray-400 text-sm">Belum ada palet yang dipilih.</span></div>
                             </div>
-                            
                             <div class="mt-8 pt-4 border-t border-gray-700 flex justify-end">
-                                <button type="submit" id="submit-btn" class="btn-primary bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition">
-                                    <span id="submit-btn-text">Kirim Transaksi</span> (<span id="submit-count">0</span> Palet)
-                                </button>
+                                <button type="submit" id="submit-btn" class="btn-primary bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition"><span id="submit-btn-text">Kirim Transaksi</span> (<span id="submit-count">0</span> Palet)</button>
                             </div>
                         </form>
                     </div>
@@ -1046,37 +797,26 @@
             `;
         }
         
-        /**
-         * (MODIFIKASI) fetchMasterDataForTransaction
-         * Menggunakan cache data master jika tersedia.
-         */
         async function fetchMasterDataForTransaction() {
             const statusMessageEl = document.getElementById(getStatusMessageId(TRANSACTION_PALET_TITLE)); 
             const namaPaletEl = document.getElementById('namaPalet');
-            
             if (!namaPaletEl) return;
             
             try {
                 namaPaletEl.innerHTML = '<option value="" disabled selected>Memuat data...</option>';
                 namaPaletEl.disabled = true;
-
-                if (!isMasterDataFetched) {
-                    await fetchMasterData();
-                }
-
+                if (!isMasterDataFetched) await fetchMasterData();
                 const data = masterPalletData;
                 
                 if (data.length === 0) {
-                    if(statusEl) statusEl.textContent = "Data Master Palet kosong. Transaksi dibatalkan.";
+                    if(statusMessageEl) statusMessageEl.textContent = "Data Master Palet kosong.";
                     return;
                 }
-
-                // (FIX) Menggunakan header HURUF BESAR
                 const uniqueNames = [...new Set(data.map(item => String(item['NAMA PALET']).trim()).filter(name => name))];
                 const options = uniqueNames.map(name => ({ value: name, label: name }));
                 namaPaletEl.innerHTML = createOptionHtml(options, 'Pilih Nama Palet');
                 namaPaletEl.disabled = false;
-                if(statusEl) statusEl.textContent = `Data Master siap (${data.length} entri)`;
+                if(statusMessageEl) statusMessageEl.textContent = `Data Master siap (${data.length} entri)`;
             } catch (error) {
                  if (statusMessageEl) statusMessageEl.textContent = 'Gagal memuat data master.';
             }
@@ -1085,36 +825,21 @@
         function updateSizePallet() {
             const namaPaletEl = document.getElementById('namaPalet');
             const sizePaletEl = document.getElementById('sizePalet');
-            
             if (!namaPaletEl || !sizePaletEl) return;
-            
             const namaPalet = namaPaletEl.value.trim();
-            
             sizePaletEl.innerHTML = createOptionHtml([], 'Pilih Size Palet');
             sizePaletEl.disabled = true;
-            
-            selectedPalletIds = []; 
-            updateSelectedDisplay();
-            renderPalletIdCards(); 
+            selectedPalletIds = []; updateSelectedDisplay(); renderPalletIdCards(); 
 
             if (!namaPalet) return;
-
-            // (FIX) Menggunakan header HURUF BESAR
-            const filteredBySize = masterPalletData.filter(item => 
-                String(item['NAMA PALET']).trim() === namaPalet
-            );
-            
-            const uniqueSizes = [...new Set(
-                filteredBySize.map(item => String(item['SIZE']).trim()).filter(size => size)
-            )];
-            
+            const filteredBySize = masterPalletData.filter(item => String(item['NAMA PALET']).trim() === namaPalet);
+            const uniqueSizes = [...new Set(filteredBySize.map(item => String(item['SIZE']).trim()).filter(size => size))];
             const options = uniqueSizes.map(size => ({ value: size, label: size }));
             
             if (options.length === 0) {
-                 sizePaletEl.innerHTML = createOptionHtml([], 'Tidak ada Size Palet tersedia');
+                 sizePaletEl.innerHTML = createOptionHtml([], 'Tidak ada Size');
                  return;
             }
-
             sizePaletEl.innerHTML = createOptionHtml(options, 'Pilih Size Palet');
             sizePaletEl.disabled = false;
         }
@@ -1123,47 +848,36 @@
             const namaPaletEl = document.getElementById('namaPalet');
             const sizePaletEl = document.getElementById('sizePalet');
             const container = document.getElementById('pallet-id-card-container');
-            
             if (!container) return; 
             
             const namaPalet = namaPaletEl ? namaPaletEl.value.trim() : '';
             const sizePalet = sizePaletEl ? sizePaletEl.value.trim() : '';
             
             container.innerHTML = `<p class="text-gray-500 col-span-full" id="id-card-status">Memfilter ID Palet...</p>`;
-            
-            selectedPalletIds = []; 
-            updateSelectedDisplay(); 
+            selectedPalletIds = []; updateSelectedDisplay(); 
 
             if (!namaPalet || !sizePalet) {
-                const existingStatusEl = document.getElementById('id-card-status');
-                if (existingStatusEl) existingStatusEl.textContent = 'Pilih Nama Palet dan Size Palet terlebih dahulu.';
+                container.innerHTML = '<p class="text-gray-500 col-span-full">Pilih Nama Palet dan Size Palet terlebih dahulu.</p>';
                 return;
             }
 
-            // (FIX) Menggunakan header HURUF BESAR
             const filteredData = masterPalletData.filter(item => 
                 String(item['NAMA PALET']).trim() === namaPalet && String(item['SIZE']).trim() === sizePalet
             );
             
-            const existingStatusEl = document.getElementById('id-card-status');
-            if (existingStatusEl) existingStatusEl.remove();
-
             if (filteredData.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 col-span-full">Tidak ditemukan ID Palet yang sesuai untuk kriteria ini.</p>';
+                container.innerHTML = '<p class="text-gray-500 col-span-full">Tidak ditemukan ID Palet.</p>';
                 return;
             }
-
+            container.innerHTML = ''; // clear loading msg
             filteredData.forEach(item => {
-                // (FIX) Menggunakan header HURUF BESAR
                 const idPalet = item['ID PALET'];
                 if (!idPalet) return; 
-                
                 const card = document.createElement('div');
                 card.id = `card-${idPalet}`;
                 card.className = `id-card rounded-lg text-center shadow-md font-mono font-semibold hover:ring-2 hover:ring-green-500 transition`;
                 card.textContent = idPalet;
                 card.onclick = () => togglePalletSelection(idPalet);
-                
                 container.appendChild(card);
             });
         }
@@ -1172,7 +886,6 @@
             const index = selectedPalletIds.indexOf(idPalet);
             const card = document.getElementById(`card-${idPalet}`);
             if (!card) return;
-
             if (index > -1) {
                 selectedPalletIds.splice(index, 1);
                 card.classList.remove('selected');
@@ -1180,9 +893,8 @@
             } else {
                 selectedPalletIds.push(idPalet);
                 card.classList.add('selected');
-                showMessage('info', `ID Palet ${idPalet} ditambahkan. Total: ${selectedPalletIds.length}`);
+                showMessage('info', `ID Palet ${idPalet} ditambahkan.`);
             }
-            
             updateSelectedDisplay();
         }
         
@@ -1190,82 +902,49 @@
             const displayEl = document.getElementById('selected-ids-display');
             const submitCountEl = document.getElementById('submit-count');
             const selectedCountEl = document.getElementById('selected-count');
-            
             if (!submitCountEl || !selectedCountEl) return;
             
             submitCountEl.textContent = selectedPalletIds.length;
             selectedCountEl.textContent = `(${selectedPalletIds.length} Palet Dipilih)`;
-
             if (displayEl) {
                 if (selectedPalletIds.length === 0) {
                     displayEl.innerHTML = '<span class="text-gray-400 text-sm">Belum ada palet yang dipilih.</span>';
                 } else {
-                    displayEl.innerHTML = selectedPalletIds.map(id => 
-                        `<span class="selected-id-tag font-mono">${id}</span>`
-                    ).join('');
+                    displayEl.innerHTML = selectedPalletIds.map(id => `<span class="selected-id-tag font-mono">${id}</span>`).join('');
                 }
             }
         }
         
-        // --- HELPER FUNCTIONS ---
-        
+        // --- HELPER UI ---
         function createFormInput(label, id, type, required, placeholder, value = '', disabled = false) {
-            const requiredAttr = required ? 'required' : '';
-            const disabledAttr = disabled ? 'disabled' : '';
-            const valueAttr = value ? `value="${value}"` : '';
-
-            return `
-                <label for="${id}" class="block text-sm font-medium text-gray-300 mb-1">
-                    ${label} ${required ? '<span class="text-red-500">*</span>' : ''}
-                </label>
-                <input type="${type}" id="${id}" name="${id}" ${valueAttr} ${requiredAttr} ${disabledAttr}
-                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-green-500 focus:border-green-500 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}"
-                       placeholder="${placeholder}">
-            `;
+            return `<label for="${id}" class="block text-sm font-medium text-gray-300 mb-1">${label} ${required ? '<span class="text-red-500">*</span>' : ''}</label>
+                <input type="${type}" id="${id}" name="${id}" ${value ? `value="${value}"` : ''} ${required ? 'required' : ''} ${disabled ? 'disabled' : ''} class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-green-500 focus:border-green-500 ${disabled ? 'opacity-50' : ''}" placeholder="${placeholder}">`;
         }
-
         function createFormSelect(label, id, options, required, onChangeFunc = '') {
-            const requiredAttr = required ? 'required' : '';
-            const onChangeAttr = onChangeFunc ? `onchange="${onChangeFunc}()"` : '';
-            
-            return `
-                <label for="${id}" class="block text-sm font-medium text-gray-300 mb-1">
-                    ${label} ${required ? '<span class="text-red-500">*</span>' : ''}
-                </label>
-                <select id="${id}" name="${id}" ${requiredAttr} ${onChangeAttr}
-                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-green-500 focus:border-green-500">
-                    ${createOptionHtml(options, `Pilih ${label}`)}
-                </select>
-            `;
+            return `<label for="${id}" class="block text-sm font-medium text-gray-300 mb-1">${label} ${required ? '<span class="text-red-500">*</span>' : ''}</label>
+                <select id="${id}" name="${id}" ${required ? 'required' : ''} ${onChangeFunc ? `onchange="${onChangeFunc}()"` : ''} class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-green-500 focus:border-green-500">${createOptionHtml(options, `Pilih ${label}`)}</select>`;
         }
-        
         function createOptionHtml(options, defaultLabel) {
-             const optionHtml = options.map(opt => 
-                `<option value="${opt.value}">${opt.label}</option>`
-            ).join('');
-            
-            return `<option value="" disabled selected>${defaultLabel}</option>${optionHtml}`;
+             return `<option value="" disabled selected>${defaultLabel}</option>` + options.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('');
         }
-        
         function showMessage(type, message) {
             const box = document.getElementById('transaction-message-box');
             if (!box) return;
-
             box.textContent = message;
             box.classList.remove('hidden', 'bg-red-800', 'bg-green-800', 'bg-blue-800', 'text-white');
-
-            if (type === 'success') {
-                box.classList.add('bg-green-800', 'text-white');
-            } else if (type === 'error') {
-                box.classList.add('bg-red-800', 'text-white');
-            } else if (type === 'loading' || type === 'info') {
-                 box.classList.add('bg-blue-800', 'text-white');
-            }
+            if (type === 'success') box.classList.add('bg-green-800', 'text-white');
+            else if (type === 'error') box.classList.add('bg-red-800', 'text-white');
+            else box.classList.add('bg-blue-800', 'text-white');
+        }
+        function createSummaryCard(value, title, colorClass) {
+            return `<div class="bg-zinc-800 p-5 rounded-xl shadow-xl border-t-4 border-green-500"><p class="text-sm text-gray-400 font-medium">${title}</p><p class="text-4xl font-extrabold mt-1 ${colorClass}">${value}</p><p class="text-xs text-gray-500 mt-2">Data dari Sheet</p></div>`;
+        }
+        function createSummaryCardPlaceholder(value, title) {
+            return `<div class="bg-zinc-800 p-5 rounded-xl shadow-xl border-t-4 border-gray-500"><p class="text-sm text-gray-400 font-medium">${title}</p><p class="text-4xl font-extrabold mt-1 text-gray-500">${value}</p><p class="text-xs text-gray-600 mt-2">Menunggu...</p></div>`;
         }
 
         /**
-         * (MODIFIKASI) submitTransaction
-         * Mengambil data dari 'kondisi' dan menyimpannya ke kolom 'Keterangan' di sheet.
+         * submitTransaction
          */
         async function submitTransaction(event) {
             event.preventDefault();
@@ -1274,33 +953,30 @@
             const submitBtnTextEl = document.getElementById('submit-btn-text');
             const submitCountEl = document.getElementById('submit-count');
             
-            if (!submitBtn || !submitBtnTextEl || !submitCountEl) {
-                console.error("Elemen tombol submit tidak ditemukan.");
-                return;
-            }
-            
+            if (!submitBtn) return;
             const formData = new FormData(form);
             
             if (selectedPalletIds.length === 0) {
-                showMessage('error', '❌ Harap pilih minimal satu ID Palet dari kartu yang tersedia.');
+                showMessage('error', '❌ Harap pilih minimal satu ID Palet.');
                 return;
             }
 
             submitBtn.disabled = true;
             submitBtnTextEl.textContent = 'Mengirim...';
             submitCountEl.textContent = selectedPalletIds.length; 
-            
             showMessage('loading', `Mengirim data untuk ${selectedPalletIds.length} palet, mohon tunggu...`);
 
             const namaPalet = formData.get('namaPalet').trim();
             const sizePalet = formData.get('sizePalet').trim();
             const tanggalTransaksi = formData.get('tanggalTransaksi').trim();
             const jenisTransaksi = formData.get('jenisTransaksi').trim();
-            // (MODIFIKASI) Mengambil data dari dropdown 'kondisi'
-            const kondisi = formData.get('kondisi').trim(); // Ini akan menjadi 'Baik', 'Rusak Ringan', dll.
+            const kondisi = formData.get('kondisi').trim(); 
             const idPaletString = selectedPalletIds.join(',');
             const now = new Date();
             const jamTransaksi = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            // Ambil username yang sedang login
+            const activeUser = currentUser ? currentUser.username : (userId || 'Unknown');
 
             const batchTransaction = {
                 'Nama Palet': namaPalet,
@@ -1310,19 +986,18 @@
                 'ID Palet': idPaletString, 
                 'Jumlah Palet': selectedPalletIds.length,
                 'Jam Transaksi': jamTransaksi,
-                // (MODIFIKASI) Menyimpan 'kondisi' ke kolom 'Keterangan' di sheet
                 'Keterangan': kondisi, 
-                'Submitted By': currentUser ? currentUser.username : (userId || 'Unknown') 
+                'USERNAME': activeUser, 
+                'Username': activeUser, 
+                'username': activeUser, 
+                'Submitted By': activeUser
             };
 
             const transactionsToSend = [batchTransaction];
-            
-            console.log(`Satu Transaksi Batch yang akan dikirim ke sheet ${TRANSACTION_SHEET_NAME}:`, batchTransaction);
-            
             const payload = {
                 sheetName: TRANSACTION_SHEET_NAME, 
                 transactions: transactionsToSend, 
-                submittedBy: currentUser ? currentUser.username : (userId || 'Unknown'), 
+                submittedBy: activeUser, 
                 timestamp: now.toLocaleString('id-ID'),
             };
 
@@ -1336,14 +1011,9 @@
                 
                 await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-                showMessage('success', `✅ Berhasil mencatat 1 Transaksi Batch (untuk ${selectedPalletIds.length} palet) ke ${TRANSACTION_SHEET_NAME}!`);
+                showMessage('success', `✅ Berhasil mencatat transaksi!`);
                 form.reset();
-                
-                selectedPalletIds = [];
-                updateSelectedDisplay(); 
-                
-                // (MODIFIKASI) Reset cache history agar data baru bisa terambil
-                isHistoryDataFetched = false;
+                selectedPalletIds = []; updateSelectedDisplay(); isHistoryDataFetched = false;
 
                 const sizePaletEl = document.getElementById('sizePalet');
                 if (sizePaletEl) {
@@ -1352,551 +1022,208 @@
                 }
                 const cardContainerEl = document.getElementById('pallet-id-card-container');
                 if (cardContainerEl) {
-                    cardContainerEl.innerHTML = '<p class="text-gray-500 col-span-full" id="id-card-status">Pilih Nama Palet dan Size Palet terlebih dahulu.</p>';
+                    cardContainerEl.innerHTML = '<p class="text-gray-500 col-span-full">Pilih Nama Palet dan Size Palet terlebih dahulu.</p>';
                 }
 
             } catch (error) {
                 console.error("Kesalahan saat mengirim data:", error);
-                showMessage('error', `❌ Gagal menyimpan transaksi batch. Pastikan Apps Script (sheet ${TRANSACTION_SHEET_NAME}) siap menerima data ini. Detail error: ${error.message}`);
+                showMessage('error', `❌ Gagal menyimpan data. Detail: ${error.message}`);
             } finally {
                 submitBtn.disabled = false;
                 submitBtnTextEl.textContent = 'Kirim Transaksi';
-                if(selectedPalletIds.length === 0) {
-                    submitCountEl.textContent = '0';
-                }
+                if(selectedPalletIds.length === 0) submitCountEl.textContent = '0';
             }
         }
-        
-        function createHeader(title, backPage) {
-             return `
-                <header class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3" id="header-${title.toLowerCase().replace(/\s/g, '-')}">
-                    <div class="flex items-center">
-                        <button onclick="navigate('${backPage}')" class="text-gray-400 hover:text-green-400 transition mr-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z"></path></svg>
-                        </button>
-                        <h1 class="text-2xl font-bold text-green-400">${title}</h1>
-                    </div>
-                    <span id="${getStatusMessageId(title)}" class="text-sm text-gray-400">Siap mencatat</span>
-                </header>
-            `;
-        }
-        
-        function createSummaryCard(value, title, colorClass) {
-            return `
-                <div class="bg-zinc-800 p-5 rounded-xl shadow-xl border-t-4 border-green-500">
-                    <p class="text-sm text-gray-400 font-medium">${title}</p>
-                    <p class="text-4xl font-extrabold mt-1 ${colorClass}">${value}</p>
-                    <p class="text-xs text-gray-500 mt-2">Data "Ringkasan Stok Palet"</p>
-                </div>
-            `;
-        }
-        
-        function createSummaryCardPlaceholder(value, title) {
-            return `
-                <div class="bg-zinc-800 p-5 rounded-xl shadow-xl border-t-4 border-gray-500">
-                    <p class="text-sm text-gray-400 font-medium">${title}</p>
-                    <p class="text-4xl font-extrabold mt-1 text-gray-500">${value}</p>
-                    <p class="text-xs text-gray-600 mt-2">Menunggu data...</p>
-                </div>
-            `;
-        }
 
-        // --- 10. LOGIC UNTUK HISTORY PALET ---
+        // --- 10. HISTORY PALET ---
         const HISTORY_PALET_TITLE = 'History Palet';
-
         function createHistoryPalletView() {
             return `
                 <div id="history-pallet-view" class="app-view p-6">
                     ${createHeader(HISTORY_PALET_TITLE, 'dashboard')}
-                    
-                    <div class="mb-4">
-                        <label for="history-filter" class="block text-sm font-medium text-gray-300 mb-1">Filter berdasarkan ID Palet:</label>
-                        <input type="text" id="history-filter" onkeyup="filterHistoryTable()" 
-                               class="w-full max-w-md px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-green-500 focus:border-green-500" 
-                               placeholder="Ketik ID Palet (contoh: P-001)...">
-                    </div>
-
+                    <div class="mb-4"><label class="block text-sm font-medium text-gray-300 mb-1">Filter berdasarkan ID Palet:</label><input type="text" id="history-filter" onkeyup="filterHistoryTable()" class="w-full max-w-md px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-green-500 focus:border-green-500" placeholder="Ketik ID Palet (contoh: P-001)..."></div>
                     <h2 class="text-xl font-bold text-gray-300 mb-3 border-b border-gray-800 pb-2">Log Transaksi Palet (Batch)</h2>
                     <div id="table-container-history" class="shadow-lg rounded-xl overflow-x-auto">
-                        <table id="pallet-table-history" class="pallet-table min-w-full divide-y divide-gray-700 rounded-xl">
-                            <thead class="bg-gray-800"><tr></tr></thead>
-                            <tbody class="divide-y divide-gray-700"></tbody>
-                        </table>
+                        <table id="pallet-table-history" class="pallet-table min-w-full divide-y divide-gray-700 rounded-xl"><thead class="bg-gray-800"><tr></tr></thead><tbody class="divide-y divide-gray-700"></tbody></table>
                     </div>
-
                     <div id="error-box-history" class="hidden mt-4 p-4 rounded-lg bg-red-800 text-white font-semibold"></div>
                 </div>
             `;
         }
-
-        /**
-         * (MODIFIKASI) fetchHistoryPalletData
-         * Menggunakan cache data history jika ada.
-         */
         async function fetchHistoryPalletData() {
             const statusMessageEl = document.getElementById(getStatusMessageId(HISTORY_PALET_TITLE)); 
             const tableHeaderEl = document.querySelector('#pallet-table-history thead tr');
             const tableBodyEl = document.querySelector('#pallet-table-history tbody');
-            const errorBoxEl = document.getElementById('error-box-history');
-            
             if (!statusMessageEl || !tableHeaderEl || !tableBodyEl) return; 
             
             try {
                 tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Memuat data...</td></tr>';
                 if(statusMessageEl) statusMessageEl.textContent = 'Memuat data...';
-
-                if (!isHistoryDataFetched) {
-                    await fetchHistoryData();
-                }
+                if (!isHistoryDataFetched) await fetchHistoryData();
                 
-                const data = historyPalletData; 
-                const headers = historyPalletHeaders;
-                
+                const data = historyPalletData; const headers = historyPalletHeaders;
                 if (data.length === 0) {
-                    statusMessageEl.textContent = "Data log transaksi tidak ditemukan.";
-                    tableHeaderEl.innerHTML = '';
-                    tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data Log Transaksi Palet yang tersedia.</td></tr>';
-                    return;
+                    statusMessageEl.textContent = "Data tidak ditemukan.";
+                    tableHeaderEl.innerHTML = ''; tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data.</td></tr>'; return;
                 }
-
-                statusMessageEl.textContent = `${data.length} Log Transaksi Ditemukan`;
-
-                tableHeaderEl.innerHTML = headers.map(header => 
-                    `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`
-                ).join('');
-                
+                statusMessageEl.textContent = `${data.length} Log Ditemukan`;
+                tableHeaderEl.innerHTML = headers.map(header => `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`).join('');
                 renderHistoryTableBody(data);
-                
             } catch (error) {
                 if (statusMessageEl) statusMessageEl.textContent = 'Gagal memuat data.';
-                 if (errorBoxEl) {
-                    errorBoxEl.textContent = `🚨 GAGAL MEMUAT DATA: ${error.message}.`;
-                    errorBoxEl.classList.remove('hidden');
-                }
             }
         }
-        
         function filterHistoryTable() {
             const filterInput = document.getElementById('history-filter');
             if (!filterInput) return;
-            
             const filterValue = filterInput.value.toUpperCase().trim();
-            
-            if (!filterValue) {
-                renderHistoryTableBody(historyPalletData);
-                return;
-            }
-            
-            const filteredData = historyPalletData.filter(item => {
-                // (FIX) Menggunakan header HURUF BESAR
-                const idPaletString = String(item['ID PALET'] || '').toUpperCase();
-                return idPaletString.includes(filterValue);
-            });
-            
+            if (!filterValue) { renderHistoryTableBody(historyPalletData); return; }
+            const filteredData = historyPalletData.filter(item => String(item['ID PALET'] || '').toUpperCase().includes(filterValue));
             renderHistoryTableBody(filteredData);
         }
-        
         function renderHistoryTableBody(data) {
             const tableBodyEl = document.querySelector('#pallet-table-history tbody');
             if (!tableBodyEl) return;
-            
             if (data.length === 0) {
-                const colSpan = historyPalletHeaders.length || 10;
-                tableBodyEl.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-4 text-gray-500">Data tidak ditemukan untuk filter ini.</td></tr>`;
-                return;
+                tableBodyEl.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">Data tidak ditemukan.</td></tr>`; return;
             }
-
             tableBodyEl.innerHTML = data.map((item, index) => {
                 const rowBgClass = (index % 2 === 0 ? 'bg-zinc-800' : 'bg-zinc-700');
-                
-                return `
-                    <tr class="${rowBgClass} text-gray-200">
-                        ${historyPalletHeaders.map(header => 
-                            `<td class="px-6 py-3 whitespace-nowrap text-sm">${item[header] || '-'}</td>`
-                        ).join('')}
-                    </tr>
-                `;
+                return `<tr class="${rowBgClass} text-gray-200">${historyPalletHeaders.map(header => `<td class="px-6 py-3 whitespace-nowrap text-sm">${item[header] || '-'}</td>`).join('')}</tr>`;
             }).join('');
         }
 
-
-        // --- 11. TAMPILAN PLACEHOLDER MENU LAIN ---
+        // --- 11. PLACEHOLDER & ANALYTICS ---
         function createPlaceholderView(title, subtitle) {
             return `
                 <div class="p-6 app-view">
                     ${createHeader(title, 'dashboard')}
                     <div class="bg-zinc-800 p-8 rounded-xl shadow-lg text-center mt-10">
                         <h2 class="text-xl font-semibold mb-2 text-gray-200">Fitur ${title}</h2>
-                        <p class="text-gray-400 mb-4">${subtitle} - Halaman ini sedang dalam pengembangan.</p>
-                        <p class="text-sm text-gray-500">Saat ini menu "Master Palet", "Stock Palet", "Transaksi Palet", dan "History Palet" sudah terintegrasi.</p>
-                        <button onclick="navigate('dashboard')" class="mt-6 bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 transition">
-                            Kembali ke Menu Utama
-                        </button>
+                        <p class="text-gray-400 mb-4">${subtitle} - Sedang pengembangan.</p>
+                        <button onclick="navigate('dashboard')" class="mt-6 bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 transition">Kembali</button>
                     </div>
                 </div>
             `;
         }
         
-        // --- (BARU) 12. LOGIC UNTUK NOTIFIKASI STOK KRITIS ---
-        
-        /**
-         * (BARU) Pemuat data untuk Dashboard (Stok Kritis)
-         * Mengambil data master dan ambang batas secara bersamaan.
-         */
         async function loadDashboardData() {
             const container = document.getElementById('critical-stock-alert-container');
             if (!container) return;
             container.innerHTML = `<div class="p-4 rounded-lg bg-blue-800 text-white font-medium">Mengecek stok kritis...</div>`;
-
             try {
-                // Ambil data Master Palet dan Ambang Batas secara paralel
-                await Promise.all([
-                    fetchMasterData(),
-                    fetchAmbangBatasData()
-                ]);
-                
-                // Setelah keduanya selesai, jalankan pengecekan
+                await Promise.all([fetchMasterData(), fetchAmbangBatasData()]);
                 checkAndDisplayCriticalStock();
-                
             } catch (error) {
-                console.error("Gagal memuat data dashboard:", error);
                 container.innerHTML = `<div class="p-4 rounded-lg bg-red-800 text-white font-medium">Gagal mengecek stok kritis.</div>`;
             }
         }
         
-        /**
-         * (BARU) Memeriksa dan Menampilkan Stok Kritis
-         * Ini adalah logika utama untuk notifikasi.
-         */
         function checkAndDisplayCriticalStock() {
             const container = document.getElementById('critical-stock-alert-container');
             if (!container) return;
-            
-            criticalStockAlerts = []; // Reset array notifikasi
-            
+            criticalStockAlerts = []; 
             if (ambangBatasData.length === 0) {
-                container.innerHTML = `<div class="p-4 rounded-lg bg-zinc-700 text-white font-medium">Sheet "Ambang Batas" kosong atau belum terdeteksi. Notifikasi stok kritis dinonaktifkan.</div>`;
-                return;
+                container.innerHTML = `<div class="p-4 rounded-lg bg-zinc-700 text-white font-medium">Sheet "Ambang Batas" kosong.</div>`; return;
             }
-            
-            // Loop melalui setiap aturan di sheet "Ambang Batas"
             ambangBatasData.forEach(rule => {
-                // (FIX) Menggunakan header HURUF BESAR (Asumsi sheet Ambang Batas juga sama)
                 const namaPalet = String(rule['NAMA PALET'] || '').trim();
                 const size = String(rule['SIZE'] || '').trim();
                 const stokMinimum = parseInt(rule['STOK MINIMUM'], 10);
-                
-                if (!namaPalet || !size || isNaN(stokMinimum)) return; // Lewati aturan yang tidak valid
-                
-                // (FIX) Menggunakan header HURUF BESAR
-                // Hitung stok *siap pakai* dari Master Data
-                const stokSiapPakai = masterPalletData.filter(item =>
-                    String(item['NAMA PALET'] || '').trim() === namaPalet &&
-                    String(item['SIZE'] || '').trim() === size &&
-                    String(item['STATUS'] || '').toUpperCase() === 'KOSONG' &&
-                    String(item['LOKASI'] || '').toUpperCase() === 'AREA PALET'
-                ).length;
-                
-                // Bandingkan
-                if (stokSiapPakai < stokMinimum) {
-                    criticalStockAlerts.push({
-                        nama: `${namaPalet} (${size})`,
-                        stok: stokSiapPakai,
-                        minimum: stokMinimum
-                    });
-                }
+                if (!namaPalet || !size || isNaN(stokMinimum)) return; 
+                const stokSiapPakai = masterPalletData.filter(item => String(item['NAMA PALET'] || '').trim() === namaPalet && String(item['SIZE'] || '').trim() === size && String(item['STATUS'] || '').toUpperCase() === 'KOSONG' && String(item['LOKASI'] || '').toUpperCase() === 'AREA PALET').length;
+                if (stokSiapPakai < stokMinimum) criticalStockAlerts.push({ nama: `${namaPalet} (${size})`, stok: stokSiapPakai, minimum: stokMinimum });
             });
-            
-            // Render notifikasi ke UI
             if (criticalStockAlerts.length > 0) {
-                let alertHtml = `
-                    <div class="p-4 rounded-lg bg-red-800 border-l-4 border-red-300 text-white">
-                        <h3 class="font-bold text-lg mb-2">🚨 PERINGATAN STOK KRITIS!</h3>
-                        <ul class="list-disc pl-5 space-y-1 text-sm">
-                `;
-                criticalStockAlerts.forEach(alert => {
-                    alertHtml += `<li>Stok <strong>${alert.nama}</strong> tersisa <strong>${alert.stok} unit</strong>. (Minimum: ${alert.minimum} unit)</li>`;
-                });
-                alertHtml += `</ul></div>`;
-                container.innerHTML = alertHtml;
-                
-                // (CATATAN) Pengiriman email tidak dapat dilakukan dari sisi klien (browser)
-                // karena alasan keamanan.
-                // Pengiriman email HARUS dikonfigurasi di sisi server (Google Apps Script).
-                // Anda bisa memodifikasi MOCK_API_DEPLOY_URL untuk juga menjalankan
-                // fungsi pengecekan stok ini dan mengirim email jika `criticalStockAlerts.length > 0`.
-                console.warn("STOK KRITIS TERDETEKSI:", criticalStockAlerts);
-                console.warn("Pengiriman email ke 'sopari1987@gmail.com' harus di-setup di Google Apps Script.");
-
+                let alertHtml = `<div class="p-4 rounded-lg bg-red-800 border-l-4 border-red-300 text-white"><h3 class="font-bold text-lg mb-2">🚨 STOK KRITIS!</h3><ul class="list-disc pl-5 space-y-1 text-sm">`;
+                criticalStockAlerts.forEach(alert => { alertHtml += `<li>Stok <strong>${alert.nama}</strong>: <strong>${alert.stok}</strong> (Min: ${alert.minimum})</li>`; });
+                alertHtml += `</ul></div>`; container.innerHTML = alertHtml;
             } else {
-                container.innerHTML = `<div class="p-4 rounded-lg bg-green-800 text-white font-medium">✅ Stok palet siap pakai terpantau aman.</div>`;
+                container.innerHTML = `<div class="p-4 rounded-lg bg-green-800 text-white font-medium">✅ Stok aman.</div>`;
             }
         }
         
-        // --- (BARU) 13. LOGIC UNTUK DASHBOARD ANALITIK ---
-        
         const ANALYTICS_TITLE = 'Dashboard Analitik';
-
-        /**
-         * (BARU) Tampilan Halaman Dashboard Analitik
-         * Berisi 3 kontainer <canvas> untuk 3 grafik.
-         */
         function createAnalyticsDashboardView() {
              return `
                 <div id="analytics-dashboard-view" class="app-view p-6">
                     ${createHeader(ANALYTICS_TITLE, 'dashboard')}
-                    
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        
-                        <!-- Grafik 1: Usia Palet di Customer -->
-                        <div class="chart-container lg:col-span-2">
-                            <h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Analisis Lama Palet di Customer</h2>
-                            <canvas id="palletAgingChart"></canvas>
-                        </div>
-                        
-                        <!-- Grafik 2: Kondisi Palet -->
-                        <div class="chart-container">
-                             <h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Analisis Laporan Kondisi Palet (dari Transaksi)</h2>
-                            <canvas id="palletConditionChart"></canvas>
-                        </div>
-                        
-                        <!-- Grafik 3: Perputaran Palet -->
-                        <div class="chart-container">
-                             <h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Perputaran Palet (30 Hari Terakhir)</h2>
-                            <canvas id="palletVelocityChart"></canvas>
-                        </div>
-                        
+                        <div class="chart-container lg:col-span-2"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Analisis Usia Palet di Customer</h2><canvas id="palletAgingChart"></canvas></div>
+                        <div class="chart-container"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Kondisi Palet (Log)</h2><canvas id="palletConditionChart"></canvas></div>
+                        <div class="chart-container"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Perputaran Palet (30 Hari)</h2><canvas id="palletVelocityChart"></canvas></div>
                     </div>
                 </div>
             `;
         }
         
-        /**
-         * (BARU) Pemuat data untuk Halaman Analitik
-         * Mengambil data master dan history sebelum me-render grafik.
-         */
         async function loadAnalyticsData() {
             const statusMessageEl = document.getElementById(getStatusMessageId(ANALYTICS_TITLE)); 
-            if(statusMessageEl) statusMessageEl.textContent = 'Memuat data grafik...';
-            
+            if(statusMessageEl) statusMessageEl.textContent = 'Memuat grafik...';
             try {
-                await Promise.all([
-                    fetchMasterData(),
-                    fetchHistoryData()
-                ]);
-                
-                // Hancurkan chart lama jika ada (penting untuk re-render)
-                Object.values(chartInstances).forEach(chart => {
-                    if (chart) chart.destroy();
-                });
-                
-                // Render 3 grafik
-                renderPalletAgingChart();
-                renderPalletConditionChart();
-                renderPalletVelocityChart();
-                
-                if(statusMessageEl) statusMessageEl.textContent = 'Grafik dimuat.';
-                
+                await Promise.all([fetchMasterData(), fetchHistoryData()]);
+                Object.values(chartInstances).forEach(chart => { if (chart) chart.destroy(); });
+                renderPalletAgingChart(); renderPalletConditionChart(); renderPalletVelocityChart();
+                if(statusMessageEl) statusMessageEl.textContent = 'Grafik siap.';
             } catch (error) {
-                 console.error("Gagal memuat data analitik:", error);
                  if(statusMessageEl) statusMessageEl.textContent = 'Gagal memuat grafik.';
             }
         }
         
-        /**
-         * (BARU) Render Grafik 1: Usia Palet di Customer
-         */
         function renderPalletAgingChart() {
-            const ctx = document.getElementById('palletAgingChart')?.getContext('2d');
-            if (!ctx) return;
-            
-            const bins = {
-                '0-10 Hari': 0,
-                '11-20 Hari': 0,
-                '21-30 Hari': 0,
-                '> 30 Hari': 0
-            };
-            
+            const ctx = document.getElementById('palletAgingChart')?.getContext('2d'); if (!ctx) return;
+            const bins = { '0-10 Hari': 0, '11-20 Hari': 0, '21-30 Hari': 0, '> 30 Hari': 0 };
             const today = new Date();
-            
             masterPalletData.forEach(item => {
-                // (FIX) Menggunakan header HURUF BESAR
                 if (String(item['LOKASI'] || '').toUpperCase() === 'CUSTOMER') {
-                    // (FIX) Menggunakan header HURUF BESAR
                     const tglUpdateStr = String(item['TANGGAL UPDATE'] || '');
-                    // Format tanggal di sheet adalah MM/DD/YYYY, perlu di-parse
                     const parts = tglUpdateStr.split('/');
                     if (parts.length === 3) {
-                        // Format: new Date(year, monthIndex, day)
                         const updateDate = new Date(parts[2], parts[0] - 1, parts[1]);
-                        const diffTime = Math.abs(today - updateDate);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        
-                        if (diffDays <= 10) bins['0-10 Hari']++;
-                        else if (diffDays <= 20) bins['11-20 Hari']++;
-                        else if (diffDays <= 30) bins['21-30 Hari']++;
-                        else bins['> 30 Hari']++;
+                        const diffDays = Math.ceil(Math.abs(today - updateDate) / (1000 * 60 * 60 * 24));
+                        if (diffDays <= 10) bins['0-10 Hari']++; else if (diffDays <= 20) bins['11-20 Hari']++; else if (diffDays <= 30) bins['21-30 Hari']++; else bins['> 30 Hari']++;
                     }
                 }
             });
-            
-            chartInstances.palletAging = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(bins),
-                    datasets: [{
-                        label: 'Jumlah Palet di Customer',
-                        data: Object.values(bins),
-                        backgroundColor: [
-                            'rgba(75, 192, 192, 0.6)',
-                            'rgba(54, 162, 235, 0.6)',
-                            'rgba(255, 206, 86, 0.6)',
-                            'rgba(255, 99, 132, 0.6)' // > 30 Hari (Bahaya!)
-                        ],
-                        borderColor: [
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(255, 99, 132, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } },
-                    plugins: { legend: { display: false } },
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
+            chartInstances.palletAging = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(bins), datasets: [{ label: 'Jumlah Palet', data: Object.values(bins), backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)', 'rgba(255, 99, 132, 0.6)'], borderColor: ['rgba(75, 192, 192, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(255, 99, 132, 1)'], borderWidth: 1 }] }, options: { scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false } });
         }
-        
-        /**
-         * (BARU) Render Grafik 2: Analisis Kondisi Palet
-         * (Berdasarkan data di 'Keterangan' dari sheet Log Transaksi)
-         */
         function renderPalletConditionChart() {
-            const ctx = document.getElementById('palletConditionChart')?.getContext('2d');
-            if (!ctx) return;
-            
-            const conditions = {
-                'Baik': 0,
-                'Rusak Ringan': 0,
-                'Rusak Berat': 0,
-                'Lainnya': 0
-            };
-            
+            const ctx = document.getElementById('palletConditionChart')?.getContext('2d'); if (!ctx) return;
+            const conditions = { 'Baik': 0, 'Rusak Ringan': 0, 'Rusak Berat': 0, 'Lainnya': 0 };
             historyPalletData.forEach(item => {
-                // (FIX) Menggunakan header HURUF BESAR
                 const kondisi = String(item['KETERANGAN'] || '').trim();
-                if (kondisi === 'Baik') conditions['Baik']++;
-                else if (kondisi === 'Rusak Ringan') conditions['Rusak Ringan']++;
-                else if (kondisi === 'Rusak Berat') conditions['Rusak Berat']++;
-                else if (kondisi && kondisi !== '-') conditions['Lainnya']++;
+                if (kondisi === 'Baik') conditions['Baik']++; else if (kondisi === 'Rusak Ringan') conditions['Rusak Ringan']++; else if (kondisi === 'Rusak Berat') conditions['Rusak Berat']++; else if (kondisi && kondisi !== '-') conditions['Lainnya']++;
             });
-            
-            chartInstances.palletCondition = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(conditions),
-                    datasets: [{
-                        data: Object.values(conditions),
-                        backgroundColor: [
-                            'rgba(75, 192, 192, 0.6)',
-                            'rgba(255, 206, 86, 0.6)',
-                            'rgba(255, 99, 132, 0.6)',
-                            'rgba(153, 102, 255, 0.6)'
-                        ],
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top', labels: { color: '#fff' } } }
-                }
-            });
+            chartInstances.palletCondition = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(conditions), datasets: [{ data: Object.values(conditions), backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 206, 86, 0.6)', 'rgba(255, 99, 132, 0.6)', 'rgba(153, 102, 255, 0.6)'], hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: '#fff' } } } } });
         }
-        
-        /**
-         * (BARU) Render Grafik 3: Perputaran Palet (Velocity)
-         */
         function renderPalletVelocityChart() {
-            const ctx = document.getElementById('palletVelocityChart')?.getContext('2d');
-            if (!ctx) return;
-            
-            const last30Days = {};
-            const labels = [];
-            const today = new Date();
-            
-            // Siapkan label untuk 30 hari terakhir
+            const ctx = document.getElementById('palletVelocityChart')?.getContext('2d'); if (!ctx) return;
+            const last30Days = {}; const labels = []; const today = new Date();
             for (let i = 29; i >= 0; i--) {
-                const d = new Date(today);
-                d.setDate(d.getDate() - i);
-                // Format MM/DD
+                const d = new Date(today); d.setDate(d.getDate() - i);
                 const label = `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
-                labels.push(label);
-                last30Days[label] = { 'Masuk Hanwa': 0, 'Keluar Hanwa': 0 };
+                labels.push(label); last30Days[label] = { 'Masuk Hanwa': 0, 'Keluar Hanwa': 0 };
             }
-            
-            // Proses data history
             historyPalletData.forEach(item => {
-                // (FIX) Menggunakan header HURUF BESAR
                 const tglStr = String(item['TANGGAL TRANSAKSI'] || '');
                 const jenis = String(item['JENIS TRANSAKSI'] || '').toUpperCase();
                 const jumlah = parseInt(item['JUMLAH PALET'], 10) || 0;
-                
                 const parts = tglStr.split('/');
                 if (parts.length === 3) {
-                     // Format di sheet MM/DD/YYYY, tapi kita hanya butuh MM/DD
                     const label = `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}`;
-                    
                     if (last30Days[label]) {
                         if (jenis === 'MASUK HANWA') last30Days[label]['Masuk Hanwa'] += jumlah;
                         else if (jenis === 'KELUAR HANWA') last30Days[label]['Keluar Hanwa'] += jumlah;
                     }
                 }
             });
-            
             const dataMasuk = labels.map(label => last30Days[label]['Masuk Hanwa']);
             const dataKeluar = labels.map(label => last30Days[label]['Keluar Hanwa']);
-
-            chartInstances.palletVelocity = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Masuk Hanwa',
-                            data: dataMasuk,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            fill: true,
-                            tension: 0.1
-                        },
-                        {
-                            label: 'Keluar Hanwa',
-                            data: dataKeluar,
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                            fill: true,
-                            tension: 0.1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } },
-                    plugins: { legend: { position: 'top', labels: { color: '#fff' } } }
-                }
-            });
+            chartInstances.palletVelocity = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Masuk Hanwa', data: dataMasuk, borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', fill: true, tension: 0.1 }, { label: 'Keluar Hanwa', data: dataKeluar, borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 0.2)', fill: true, tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, plugins: { legend: { position: 'top', labels: { color: '#fff' } } } } });
         }
 
-
-        // --- 14. EKSEKUSI APLIKASI ---
+        // --- 12. EKSEKUSI ---
         window.onload = () => {
-            // Menjadikan fungsi global agar bisa dipanggil dari HTML
             window.navigate = navigate;
             window.submitTransaction = submitTransaction; 
             window.updateSizePallet = updateSizePallet;
@@ -1904,15 +1231,10 @@
             window.togglePalletSelection = togglePalletSelection; 
             window.filterHistoryTable = filterHistoryTable; 
             window.filterMasterPalletTable = filterMasterPalletTable;
-            
-            // Daftarkan fungsi login/logout
             window.handleLogin = handleLogin;
             window.handleLogout = handleLogout;
-            
-            // Jalankan pemeriksaan sesi
             checkSessionAndRender();
         };
-
     </script>
 </body>
 </html>
