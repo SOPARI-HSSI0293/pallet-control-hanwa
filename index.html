@@ -137,6 +137,32 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #22c55e; 
         }
+        
+        /* --- PRINT STYLES --- */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-area, #printable-area * {
+                visibility: visible;
+            }
+            #printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background-color: white !important;
+                color: black !important;
+            }
+            /* Hide scrollbars and interface elements when printing */
+            ::-webkit-scrollbar { display: none; }
+            .no-print { display: none !important; }
+            
+            /* Adjust table for print */
+            table { width: 100% !important; border-collapse: collapse !important; }
+            th, td { border: 1px solid black !important; padding: 8px !important; color: black !important; }
+            th { background-color: #f3f4f6 !important; font-weight: bold !important; }
+        }
     </style>
 </head>
 <body>
@@ -166,6 +192,8 @@
         let selectedPalletIds = []; 
         let currentSTOList = []; // Untuk menyimpan data STO sementara
         let ambangBatasData = []; 
+        let formSTOData = []; // Data untuk form cetak
+        let reportSTOData = []; // Data untuk report hasil
         let criticalStockAlerts = []; 
         let isMasterDataFetched = false;
         let isHistoryDataFetched = false;
@@ -292,6 +320,10 @@
                     container.innerHTML = createSTOPalletView();
                     fetchMasterDataForSTO();
                     break;
+                case 'formReportSTO': // HALAMAN BARU
+                    container.innerHTML = createFormReportSTOView();
+                    initFormReportSTO();
+                    break;
                 case 'dashboard':
                 default:
                     container.innerHTML = createDashboardView();
@@ -356,7 +388,7 @@
                     
                     <div id="critical-stock-alert-container" class="mb-6"></div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
                         <div onclick="navigate('masterPalet')" class="menu-card rounded-xl p-8 shadow-xl">
                             <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10m-4-11l-4 2.12V17M16 12l4 2.12V17"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Master Palet</h2><p class="text-sm text-gray-400">Data Induk Palet</p></div>
@@ -369,6 +401,17 @@
                             <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-1.447 3.382l-.675.337M4 12a7 7 0 1014 0 7 7 0 01-14 0z"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Transaksi Palet</h2><p class="text-sm text-gray-400">Log Pergerakan Palet</p></div>
                         </div>
+                        <div onclick="navigate('stoPalet')" class="menu-card rounded-xl p-8 shadow-xl">
+                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">STO Palet</h2><p class="text-sm text-gray-400">Stock Taking Palet</p></div>
+                        </div>
+                        
+                        <!-- KARTU MENU BARU: Form & Report STO -->
+                        <div onclick="navigate('formReportSTO')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-indigo-500">
+                            <svg class="icon w-16 h-16 mb-4 mx-auto text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Form & Report STO</h2><p class="text-sm text-gray-400">Cetak Form & Laporan</p></div>
+                        </div>
+
                         <div onclick="navigate('analyticsDashboard')" class="menu-card rounded-xl p-8 shadow-xl">
                              <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Dashboard Analitik</h2><p class="text-sm text-gray-400">Grafik & Wawasan Palet</p></div>
@@ -376,10 +419,6 @@
                         <div onclick="navigate('historyPalet')" class="menu-card rounded-xl p-8 shadow-xl">
                             <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">History Palet</h2><p class="text-sm text-gray-400">Log Transaksi Palet</p></div>
-                        </div>
-                        <div onclick="navigate('stoPalet')" class="menu-card rounded-xl p-8 shadow-xl">
-                            <svg class="icon w-16 h-16 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">STO Palet</h2><p class="text-sm text-gray-400">Stock Taking Palet</p></div>
                         </div>
                     </div>
                     <footer class="mt-12 text-center text-xs text-grey-600">
@@ -395,6 +434,7 @@
         const STOCK_SHEET_NAME = 'Ringkasan Stok Palet'; 
         const TRANSACTION_SHEET_NAME = 'Log Transaksi Palet Batch'; 
         const STO_SHEET_NAME = 'STOCK OPNAME'; 
+        const FORM_STO_SHEET_NAME = 'Form STO'; // Nama sheet form STO
         const USERCONTROL_SHEET_NAME = 'Usercontrol';
         const AMBANG_BATAS_SHEET_NAME = 'Ambang Batas'; 
         const RANGE = 'A:H'; 
@@ -403,6 +443,12 @@
         const MASTER_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${MASTER_SHEET_NAME}&range=${RANGE}`;
         const STOCK_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STOCK_SHEET_NAME}&range=${RANGE}`;
         const HISTORY_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${TRANSACTION_SHEET_NAME}&range=${HISTORY_RANGE}`;
+        const FORM_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${FORM_STO_SHEET_NAME}&range=A:Z`;
+        
+        // --- PERUBAHAN DI SINI: UPDATE URL RANGE REPORT STO ---
+        // Diubah dari A:M menjadi A:Z untuk memastikan kolom Bulan STO dan Tahun STO terbaca
+        const STO_REPORT_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STO_SHEET_NAME}&range=A:Z`; 
+        
         const USERCONTROL_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${USERCONTROL_SHEET_NAME}&range=A:C`;
         const AMBANG_BATAS_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${AMBANG_BATAS_SHEET_NAME}&range=A:C`;
         
@@ -425,10 +471,11 @@
             }
         }
         
+        // FUNGSI PARSING GVIZ (MENGUBAH SEMUA HEADER JADI UPPERCASE)
         function parseGVizData(data) {
             const columns = data.table.cols.map(col => ({
                 id: col.id,
-                label: (col.label || col.id).toUpperCase().trim()  
+                label: (col.label || col.id).toUpperCase().trim()  // HEADER JADI UPPERCASE DI SINI
             })).filter(col => col.label); 
 
             const rows = data.table.rows;
@@ -974,7 +1021,12 @@
 
             const namaPalet = formData.get('namaPalet').trim();
             const sizePalet = formData.get('sizePalet').trim();
-            const tanggalTransaksi = formData.get('tanggalTransaksi').trim();
+            
+            // --- PERBAIKAN FORMAT TANGGAL (YYYY-MM-DD) ---
+            // Menggunakan format raw dari input date (YYYY-MM-DD) adalah cara paling aman
+            // agar Google Sheets mendeteksinya sebagai 'Date' dan bukan 'Text'.
+            const tanggalTransaksi = formData.get('tanggalTransaksi').trim(); 
+
             const jenisTransaksi = formData.get('jenisTransaksi').trim();
             const kondisi = formData.get('kondisi').trim(); 
             const idPaletString = selectedPalletIds.join(',');
@@ -987,7 +1039,7 @@
             const batchTransaction = {
                 'Nama Palet': namaPalet,
                 'Size': sizePalet, 
-                'Tanggal Transaksi': tanggalTransaksi,
+                'Tanggal Transaksi': tanggalTransaksi, // Mengirim YYYY-MM-DD
                 'Jenis Transaksi': jenisTransaksi,
                 'ID Palet': idPaletString, 
                 'Jumlah Palet': selectedPalletIds.length,
@@ -1052,7 +1104,7 @@
                     <div class="bg-zinc-800 p-6 sm:p-8 rounded-xl shadow-2xl border border-zinc-700">
                         <div class="flex justify-between items-end mb-6">
                             <div>
-                                <h2 class="text-xl font-bold text-green-400">Pencocokan Data dan Aktual</h2>
+                                <h2 class="text-xl font-bold text-green-400">Pencocokan Stok Fisik (Opname)</h2>
                                 <p class="text-sm text-gray-400 mt-1">Pilih Lokasi, lalu tandai ID Palet yang <span class="text-green-300 font-bold">DITEMUKAN</span> secara fisik di lapangan.</p>
                             </div>
                             <div class="text-right hidden md:block">
@@ -1342,9 +1394,21 @@
             const lokasi = formData.get('stoLokasi');
             const nama = formData.get('stoNamaPalet');
             const size = formData.get('stoSizePalet');
-            const tgl = formData.get('stoTanggal');
+            const tgl = formData.get('stoTanggal'); // Format YYYY-MM-DD
             const checker = formData.get('stoChecker');
             const now = new Date();
+
+            // --- LOGIKA BARU: Ambil Bulan dan Tahun dari Tanggal Transaksi ---
+            // Tgl format: YYYY-MM-DD
+            const dateParts = tgl.split('-');
+            const yearSTO = dateParts[0];
+            const monthIndex = parseInt(dateParts[1]) - 1; // 0-11
+            const monthsList = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            const monthSTO = monthsList[monthIndex];
+            
+            // --- PERBAIKAN FORMAT TANGGAL STO (YYYY-MM-DD) ---
+            // Kita kirim format raw YYYY-MM-DD agar Google Sheet mendeteksinya sebagai Date
+            const formattedDate = tgl; 
 
             // Data preparation
             const idFound = selectedPalletIds.join(',');
@@ -1352,26 +1416,27 @@
             const totalSystem = currentSTOList.length;
             const missingCount = totalSystem - countFound;
             
-            // Sesuai urutan kolom yang diminta:
-            // Tanggal Transaksi, Jam Transaksi, Lokasi Awal, Nama Palet, Size, ID Palet, Jumlah Palet, Keterangan, USERNAME, Submitted By, Jenis Transaksi
-            
             const stoData = {
-                'Tanggal Transaksi': tgl,
+                'Tanggal Transaksi': formattedDate, // Mengirim YYYY-MM-DD
                 'Jam Transaksi': now.toLocaleTimeString('id-ID'),
                 'Lokasi Awal': lokasi,
                 'Nama Palet': nama,
                 'Size': size,
                 'ID Palet': idFound,
                 'Jumlah Palet': countFound,
-                'MISSING': missingCount, // KOLOM BARU: Mencatat nilai missing ke database
+                'MISSING': missingCount, 
+                'SYSTEM': totalSystem, 
                 'Keterangan': `LOKASI: ${lokasi} | SYSTEM: ${totalSystem} | FOUND: ${countFound} | MISSING: ${missingCount}`,
-                'USERNAME': checker, // Ini nama petugas input manual
-                'Submitted By': currentUser ? currentUser.username : 'Guest', // Ini akun yang login
-                'Jenis Transaksi': 'STOCK OPNAME'
+                'USERNAME': checker, 
+                'Submitted By': currentUser ? currentUser.username : 'Guest', 
+                'Jenis Transaksi': 'STOCK OPNAME',
+                // --- MENAMBAHKAN FIELD BARU KE DATABASE ---
+                'Bulan STO': monthSTO,
+                'Tahun STO': yearSTO
             };
 
             const payload = {
-                sheetName: STO_SHEET_NAME, // 'STOCK OPNAME'
+                sheetName: STO_SHEET_NAME, 
                 transactions: [stoData],
                 submittedBy: currentUser ? currentUser.username : 'Guest',
                 timestamp: now.toLocaleString('id-ID')
@@ -1385,7 +1450,6 @@
                     body: JSON.stringify(payload)
                 });
 
-                // Simulasi delay
                 await new Promise(resolve => setTimeout(resolve, 1500));
 
                 msgBox.textContent = `✅ STO Berhasil disimpan! Ditemukan: ${countFound}/${totalSystem}.`;
@@ -1395,7 +1459,6 @@
                 // --- MODIFIKASI: RESET TOTAL KE POSISI AWAL ---
                 event.target.reset(); // Reset inputan HTML form
                 
-                // Reset Dropdown Nama & Size menjadi disabled
                 const namaEl = document.getElementById('stoNamaPalet');
                 const sizeEl = document.getElementById('stoSizePalet');
                 
@@ -1408,18 +1471,15 @@
                     sizeEl.disabled = true;
                 }
 
-                // Reset Container Kartu menjadi pesan instruksi awal
                 const container = document.getElementById('sto-id-card-container');
                 if (container) {
                     container.innerHTML = '<p class="text-gray-500 col-span-full italic py-4 text-center">Silakan pilih Lokasi, Nama, dan Size Palet terlebih dahulu.</p>';
                 }
 
-                // Reset Data Logic
                 selectedPalletIds = [];
                 currentSTOList = [];
                 updateSTOCounters(0);
                 
-                // Pastikan Tanggal terisi hari ini lagi
                 const tglInput = document.getElementById('stoTanggal');
                 if(tglInput) tglInput.value = new Date().toISOString().split('T')[0];
 
@@ -1433,6 +1493,367 @@
                 submitBtn.textContent = "Simpan Hasil STO";
             }
         }
+
+        // --- 11. HALAMAN BARU: FORM DAN REPORT STO ---
+        const FORM_REPORT_STO_TITLE = 'Form & Report STO';
+        
+        function createFormReportSTOView() {
+            const currentYear = new Date().getFullYear();
+            
+            // --- PERUBAHAN DI SINI: DAFTAR BULAN (STRING) ---
+            // Menggunakan nama bulan penuh agar sesuai dengan data yang disimpan di "Bulan STO"
+            const months = [
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ];
+            
+            // Generate Year options (current year +- 2)
+            const yearOptions = [];
+            for(let y = currentYear - 2; y <= currentYear + 1; y++) yearOptions.push({val: y, label: y});
+
+            return `
+                <div id="form-report-sto-view" class="app-view p-6 max-w-6xl mx-auto">
+                    ${createHeader(FORM_REPORT_STO_TITLE, 'dashboard')}
+                    
+                    <!-- BAGIAN ATAS: FORM STO (Untuk Dicetak) -->
+                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg mb-8">
+                        <div class="flex justify-between items-center mb-4 border-b border-zinc-700 pb-2">
+                            <h2 class="text-xl font-bold text-green-400">1. Form Cetak STO</h2>
+                            <div class="flex gap-2">
+                                <button onclick="printForm()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Cetak Form PDF
+                                </button>
+                                <!-- TOMBOL BARU: Export Form Excel -->
+                                <button onclick="exportFormExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Export Form Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div id="printable-form-container" class="bg-white text-black p-4 rounded overflow-auto h-64 relative">
+                            <p class="text-center text-gray-500 mt-10">Memuat Form STO...</p>
+                        </div>
+                    </div>
+
+                    <!-- BAGIAN BAWAH: REPORT STO -->
+                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg">
+                        <div class="flex justify-between items-center mb-4 border-b border-zinc-700 pb-2">
+                            <h2 class="text-xl font-bold text-green-400">2. Laporan Hasil STO</h2>
+                            <div class="flex gap-2">
+                                <button onclick="exportReport('pdf')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-sm flex items-center">
+                                    PDF
+                                </button>
+                                <button onclick="exportReport('excel')" class="bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded text-sm flex items-center">
+                                    Excel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Filter Report -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-zinc-700/50 p-4 rounded-lg">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Bulan</label>
+                                <!-- PERUBAHAN DI SINI: VALUE DROPDOWN MENGGUNAKAN NAMA BULAN -->
+                                <select id="reportMonth" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                    <option value="">Semua Bulan</option>
+                                    ${months.map(m => `<option value="${m}">${m}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Tahun</label>
+                                <select id="reportYear" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                    ${yearOptions.map(y => `<option value="${y.val}" ${y.val === currentYear ? 'selected' : ''}>${y.label}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Nama Palet</label>
+                                <select id="reportPalletName" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                    <option value="">Semua Palet</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="filterAndRenderReport()" class="w-full bg-green-600 hover:bg-green-500 text-white py-1.5 rounded text-sm font-bold">Tampilkan Data</button>
+                            </div>
+                        </div>
+
+                        <!-- Tabel Report -->
+                        <div class="overflow-x-auto">
+                            <table id="sto-report-table" class="min-w-full text-sm text-left text-gray-300">
+                                <thead class="bg-zinc-900 text-xs uppercase text-gray-400">
+                                    <tr>
+                                        <th class="px-4 py-3">Nama Palet</th>
+                                        <th class="px-4 py-3">Size</th>
+                                        <th class="px-4 py-3">Lokasi Awal</th>
+                                        <th class="px-4 py-3 text-center">SYSTEM</th>
+                                        <th class="px-4 py-3 text-center">FISIK (Jml)</th>
+                                        <th class="px-4 py-3 text-center text-red-400">MISSING</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sto-report-body" class="divide-y divide-zinc-700">
+                                    <tr><td colspan="6" class="text-center py-4">Silakan pilih filter dan klik Tampilkan Data.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Area Cetak Tersembunyi (Printable Area) -->
+                <div id="printable-area" class="hidden bg-white text-black p-8"></div>
+            `;
+        }
+
+        async function initFormReportSTO() {
+            // 1. Load Data Form STO
+            fetchFormSTOData();
+            
+            // 2. Load Data Report (Stock Opname sheet) & Populate Filters
+            await fetchReportSTOData();
+        }
+
+        async function fetchFormSTOData() {
+            const container = document.getElementById('printable-form-container');
+            try {
+                const parsedData = await fetchSheetData(FORM_STO_URL); // Fetch dari sheet Form STO
+                formSTOData = parsedData.data;
+                
+                if (formSTOData.length === 0) {
+                    // Fallback jika sheet kosong/tidak ada, buat tabel dummy dari Master Data
+                    await fetchMasterData();
+                    renderFormSTOFallback(container);
+                    // Set formSTOData agar bisa diexport Excel
+                    formSTOData = masterPalletData.sort((a, b) => (a['LOKASI'] || '').localeCompare(b['LOKASI'] || ''));
+                } else {
+                    renderFormSTO(container, parsedData.headers, formSTOData);
+                }
+            } catch (error) {
+                console.warn("Gagal load Form STO, menggunakan fallback master data.", error);
+                await fetchMasterData();
+                renderFormSTOFallback(container);
+                 // Set fallback data for Excel export
+                 formSTOData = masterPalletData.sort((a, b) => (a['LOKASI'] || '').localeCompare(b['LOKASI'] || ''));
+            }
+        }
+        
+        // Render Form STO dari Sheet Khusus
+        function renderFormSTO(container, headers, data) {
+            let html = `<h3 class="text-center font-bold text-xl mb-4">FORM CEK STO PALET</h3>`;
+            html += `<table class="w-full border-collapse border border-black text-xs"><thead><tr class="bg-gray-200">`;
+            headers.forEach(h => html += `<th class="border border-black p-2">${h}</th>`);
+            html += `</tr></thead><tbody>`;
+            
+            data.forEach(row => {
+                html += `<tr>`;
+                headers.forEach(h => html += `<td class="border border-black p-2">${row[h] || ''}</td>`);
+                html += `</tr>`;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        // Fallback: Render Form STO dari Master Data (Jika sheet khusus tidak ada)
+        function renderFormSTOFallback(container) {
+            let html = `<h3 class="text-center font-bold text-xl mb-2">FORM CEK STO PALET</h3>`;
+            html += `<p class="text-center text-sm mb-4">Tanggal Cek: .............................. | Checker: ..............................</p>`;
+            html += `<table class="w-full border-collapse border border-black text-xs">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border border-black p-2">No</th>
+                        <th class="border border-black p-2">ID Palet</th>
+                        <th class="border border-black p-2">Nama Palet</th>
+                        <th class="border border-black p-2">Size</th>
+                        <th class="border border-black p-2">Lokasi Sistem</th>
+                        <th class="border border-black p-2">Fisik (V)</th>
+                        <th class="border border-black p-2">Keterangan</th>
+                    </tr>
+                </thead><tbody>`;
+            
+            // Urutkan berdasarkan Lokasi lalu Nama
+            const sortedData = masterPalletData.sort((a, b) => (a['LOKASI'] || '').localeCompare(b['LOKASI'] || ''));
+            
+            sortedData.forEach((item, idx) => {
+                html += `<tr>
+                    <td class="border border-black p-1 text-center">${idx + 1}</td>
+                    <td class="border border-black p-1 font-bold">${item['ID PALET'] || '-'}</td>
+                    <td class="border border-black p-1">${item['NAMA PALET'] || '-'}</td>
+                    <td class="border border-black p-1">${item['SIZE'] || '-'}</td>
+                    <td class="border border-black p-1">${item['LOKASI'] || '-'}</td>
+                    <td class="border border-black p-1"></td>
+                    <td class="border border-black p-1"></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function printForm() {
+            const content = document.getElementById('printable-form-container').innerHTML;
+            const printArea = document.getElementById('printable-area');
+            printArea.innerHTML = content;
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden'); // Hide again after print dialog closes (or user cancels)
+        }
+
+        // FUNGSI BARU: Export Form Excel
+        function exportFormExcel() {
+            if (!formSTOData || formSTOData.length === 0) {
+                alert("Data Form kosong, tidak bisa diexport.");
+                return;
+            }
+
+            let csvContent = [];
+            // Judul
+            csvContent.push(`"FORM CEK STO PALET"`);
+            csvContent.push(`"Tanggal Cek:","..............................","Checker:",".............................."`);
+            csvContent.push(""); // Spasi kosong
+
+            // Header
+            const headers = ["No", "ID Palet", "Nama Palet", "Size", "Lokasi Sistem", "Fisik (V)", "Keterangan"];
+            csvContent.push(headers.map(h => `"${h}"`).join(","));
+
+            // Isi Data (Fallback Logic)
+            // Asumsi formSTOData adalah array dari Master Data yang sudah disort
+            formSTOData.forEach((item, index) => {
+                const row = [
+                    index + 1,
+                    `"${item['ID PALET'] || '-'}"`,
+                    `"${item['NAMA PALET'] || '-'}"`,
+                    `"${item['SIZE'] || '-'}"`,
+                    `"${item['LOKASI'] || '-'}"`,
+                    "", // Kolom Fisik Kosong untuk diisi manual
+                    ""  // Kolom Keterangan Kosong
+                ];
+                csvContent.push(row.join(","));
+            });
+
+            // Download CSV/Excel File
+            const csvFile = new Blob([csvContent.join("\n")], {type: "text/csv"});
+            const downloadLink = document.createElement("a");
+            downloadLink.download = `Form_STO_Kosong_${new Date().toISOString().slice(0,10)}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+
+        // --- REPORT LOGIC ---
+
+        async function fetchReportSTOData() {
+            try {
+                const parsedData = await fetchSheetData(STO_REPORT_URL);
+                reportSTOData = parsedData.data;
+                
+                // Populate Pallet Name Filter
+                const uniqueNames = [...new Set(reportSTOData.map(item => item['NAMA PALET']).filter(n => n))].sort();
+                const nameSelect = document.getElementById('reportPalletName');
+                if (nameSelect) {
+                    nameSelect.innerHTML = '<option value="">Semua Palet</option>' + uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                }
+
+            } catch (error) {
+                console.error("Gagal load Report STO:", error);
+                const tbody = document.getElementById('sto-report-body');
+                if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-400">Gagal memuat data report.</td></tr>`;
+            }
+        }
+
+        function filterAndRenderReport() {
+            const month = document.getElementById('reportMonth').value; // String: "Januari", "Februari"
+            const year = document.getElementById('reportYear').value; // String: "2025"
+            const name = document.getElementById('reportPalletName').value;
+            const tbody = document.getElementById('sto-report-body');
+            
+            if (!reportSTOData || !reportSTOData.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4">Data kosong atau belum termuat.</td></tr>`;
+                return;
+            }
+
+            // --- PERUBAHAN DI SINI: LOGIKA FILTER BARU ---
+            // Menggunakan kolom BULAN STO dan TAHUN STO langsung
+            const filtered = reportSTOData.filter(row => {
+                // Ambil data dari kolom (pastikan key uppercase karena parserGviz)
+                const rowMonth = String(row['BULAN STO'] || '').trim();
+                const rowYear = String(row['TAHUN STO'] || '').trim();
+                const rowName = row['NAMA PALET'];
+
+                // Logika Filter: Jika filter kosong (""), anggap true (cocok semua)
+                // Karena value di dropdown bulan sudah string "Januari", "Februari", bisa langsung compare
+                const matchMonth = month ? (rowMonth === month) : true;
+                const matchYear = year ? (rowYear === year) : true;
+                const matchName = name ? (rowName === name) : true;
+                
+                return matchMonth && matchYear && matchName;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4">Tidak ada data sesuai filter. (Coba ubah Bulan/Tahun)</td></tr>`;
+                return;
+            }
+
+            // --- PERUBAHAN DI SINI: RENDER TABEL KOLOM TERTENTU ---
+            // Kolom: Nama Palet, Size, Lokasi Awal, SYSTEM, FISIK (Jumlah Palet), MISSING
+            tbody.innerHTML = filtered.map(row => `
+                <tr class="bg-zinc-800 hover:bg-zinc-700 border-b border-zinc-700">
+                    <td class="px-4 py-2 font-medium text-green-400">${row['NAMA PALET'] || '-'}</td>
+                    <td class="px-4 py-2 text-xs">${row['SIZE'] || '-'}</td>
+                    <td class="px-4 py-2 text-xs">${row['LOKASI AWAL'] || '-'}</td>
+                    <td class="px-4 py-2 text-center font-bold">${row['SYSTEM'] || '0'}</td>
+                    <td class="px-4 py-2 text-center font-bold text-green-300">${row['JUMLAH PALET'] || '0'}</td>
+                    <td class="px-4 py-2 text-center font-bold text-red-400">${row['MISSING'] || '0'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportReport(type) {
+            const tbody = document.getElementById('sto-report-body');
+            if (!tbody || tbody.rows.length <= 1 && tbody.rows[0].innerText.includes('Silakan')) {
+                alert("Tampilkan data terlebih dahulu.");
+                return;
+            }
+
+            if (type === 'pdf') {
+                // Print Report Table Only
+                const tableHtml = document.getElementById('sto-report-table').outerHTML;
+                const title = `<h2 style="text-align:center; margin-bottom:20px;">Laporan Hasil Stock Opname</h2>`;
+                const filterInfo = `<p>Periode: ${document.getElementById('reportMonth').value} ${document.getElementById('reportYear').value}</p>`;
+                
+                const printArea = document.getElementById('printable-area');
+                printArea.innerHTML = title + filterInfo + tableHtml;
+                printArea.classList.remove('hidden');
+                window.print();
+                printArea.classList.add('hidden');
+
+            } else if (type === 'excel') {
+                // Simple CSV Export
+                let csv = [];
+                const rows = document.querySelectorAll("#sto-report-table tr");
+                
+                for (let i = 0; i < rows.length; i++) {
+                    let row = [], cols = rows[i].querySelectorAll("td, th");
+                    for (let j = 0; j < cols.length; j++) 
+                        row.push('"' + cols[j].innerText + '"');
+                    csv.push(row.join(","));        
+                }
+
+                const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+                const downloadLink = document.createElement("a");
+                downloadLink.download = `Report_STO_${new Date().toISOString().slice(0,10)}.csv`;
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+            }
+        }
+        
+        // Expose functions to window
+        window.printForm = printForm;
+        window.exportFormExcel = exportFormExcel; // Tambahkan ini
+        window.exportReport = exportReport;
+        window.filterAndRenderReport = filterAndRenderReport;
+
 
         // --- 11. HISTORY PALET ---
         const HISTORY_PALET_TITLE = 'History Palet';
@@ -1536,9 +1957,9 @@
                 <div id="analytics-dashboard-view" class="app-view p-6">
                     ${createHeader(ANALYTICS_TITLE, 'dashboard')}
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="chart-container lg:col-span-2"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Analisis Lama Palet di Customer</h2><canvas id="palletAgingChart"></canvas></div>
-                        <div class="chart-container"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Kondisi Palet </h2><canvas id="palletConditionChart"></canvas></div>
-                        <div class="chart-container"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Grafik Pergerakan Palet</h2><canvas id="palletVelocityChart"></canvas></div>
+                        <div class="chart-container lg:col-span-2"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Analisis Usia Palet di Customer</h2><canvas id="palletAgingChart"></canvas></div>
+                        <div class="chart-container"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Kondisi Palet (Log)</h2><canvas id="palletConditionChart"></canvas></div>
+                        <div class="chart-container"><h2 class="text-xl font-bold text-gray-300 mb-4 text-center">Pergerakan Palet (Bulan Ini)</h2><canvas id="palletVelocityChart"></canvas></div>
                     </div>
                 </div>
             `;
@@ -1801,6 +2222,12 @@
             window.renderSTOPalletIds = renderSTOPalletIds;
             window.toggleSTOSelection = toggleSTOSelection;
             window.selectAllSTO = selectAllSTO;
+
+            // Form Report Functions
+            window.printForm = printForm;
+            window.exportFormExcel = exportFormExcel; // Tambahkan ini
+            window.exportReport = exportReport;
+            window.filterAndRenderReport = filterAndRenderReport;
 
             window.handleLogin = handleLogin;
             window.handleLogout = handleLogout;
