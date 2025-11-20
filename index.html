@@ -1566,6 +1566,10 @@
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                     Cetak PDF
                                 </button>
+                                <button onclick="exportFormExcel()" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Export Excel
+                                </button>
                             </div>
                         </div>
                         <div id="printable-form-container" class="bg-white text-black p-4 rounded overflow-auto h-96 relative">
@@ -1710,36 +1714,35 @@
             `;
             
             // Loop Sizes untuk membuat baris
+            // UPDATE: Mengubah menjadi 4 baris per item sesuai permintaan (2 Kosong, 2 Isi)
             sizes.forEach((size, index) => {
-                // Baris Pertama (KOSONG) - No & Size pakai rowspan 2
+                const gridHtml = `<div class="grid grid-cols-[repeat(25,minmax(0,1fr))] h-full w-full">${Array(25).fill('').map(() => `<div class="border-r border-gray-300 h-6"></div>`).join('')}</div>`;
+
+                // Baris 1: No, Size, Kosong 1
                 html += `
                     <tr>
-                        <td rowspan="2" class="border border-black p-1 text-center font-bold bg-white text-black">${index + 1}</td>
-                        <td rowspan="2" class="border border-black p-1 text-center font-bold bg-white text-black">${size}</td>
+                        <td rowspan="4" class="border border-black p-1 text-center font-bold bg-white text-black">${index + 1}</td>
+                        <td rowspan="4" class="border border-black p-1 text-center font-bold bg-white text-black">${size}</td>
                         <td class="border border-black p-1 text-center bg-white text-black">KOSONG</td>
-                        <td class="border border-black p-0 bg-white text-black">
-                            <!-- Grid Kotak Kosong -->
-                            <div class="grid grid-cols-[repeat(25,minmax(0,1fr))] h-full w-full">
-                                ${Array(25).fill('').map(() => `<div class="border-r border-gray-300 h-6"></div>`).join('')}
-                            </div>
-                        </td>
+                        <td class="border border-black p-0 bg-white text-black">${gridHtml}</td>
                     </tr>
-                    <!-- Baris Kedua (ISI) -->
+                    <!-- Baris 2: Kosong 2 -->
+                    <tr>
+                        <td class="border border-black p-1 text-center bg-white text-black">KOSONG</td>
+                        <td class="border border-black p-0 bg-white text-black">${gridHtml}</td>
+                    </tr>
+                    <!-- Baris 3: Isi 1 -->
                     <tr>
                         <td class="border border-black p-1 text-center bg-white text-black">ISI</td>
-                        <td class="border border-black p-0 bg-white text-black">
-                            <!-- Grid Kotak Kosong -->
-                            <div class="grid grid-cols-[repeat(25,minmax(0,1fr))] h-full w-full">
-                                ${Array(25).fill('').map(() => `<div class="border-r border-gray-300 h-6"></div>`).join('')}
-                            </div>
-                        </td>
+                        <td class="border border-black p-0 bg-white text-black">${gridHtml}</td>
+                    </tr>
+                    <!-- Baris 4: Isi 2 -->
+                    <tr>
+                        <td class="border border-black p-1 text-center bg-white text-black">ISI</td>
+                        <td class="border border-black p-0 bg-white text-black">${gridHtml}</td>
                     </tr>
                 `;
             });
-            
-            // Tambahkan beberapa baris kosong tambahan jika perlu (opsional, untuk mengisi kertas)
-            // Tapi sesuai instruksi "kotak kosong sampai full kertas" biasanya berarti kolom ke samping.
-            // Grid di atas sudah mengisi ke samping (colspan sisa).
             
             html += `</tbody></table></div>`;
             container.innerHTML = html;
@@ -1754,12 +1757,61 @@
             printArea.classList.add('hidden'); // Hide again after print dialog closes (or user cancels)
         }
 
-        // FUNGSI BARU: Export Form Excel
+        // FUNGSI BARU: Export Form Excel (Menggunakan Blob HTML)
         function exportFormExcel() {
-            // Karena kita generate form secara dinamis, fitur export Excel statis sebelumnya kurang relevan 
-            // kecuali kita generate CSV berdasarkan data yang sedang ditampilkan.
-            // Untuk saat ini kita biarkan alert atau modifikasi sederhana.
-            alert("Fitur Export Excel untuk format baru ini belum tersedia. Silakan gunakan Cetak PDF.");
+            const container = document.getElementById('printable-form-container');
+            // Cek apakah form sudah dirender (ada tabel)
+            if (!container || !container.querySelector('table')) {
+                alert("Silakan tampilkan form terlebih dahulu.");
+                return;
+            }
+
+            // Ambil HTML
+            const tableHtml = container.innerHTML;
+
+            // Template minimal untuk Excel agar bisa membaca HTML sebagai spreadsheet
+            const excelTemplate = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <!--[if gte mso 9]>
+                    <xml>
+                    <x:ExcelWorkbook>
+                    <x:ExcelWorksheets>
+                    <x:ExcelWorksheet>
+                    <x:Name>Form STO</x:Name>
+                    <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                    </x:WorksheetOptions>
+                    </x:ExcelWorksheet>
+                    </x:ExcelWorksheets>
+                    </x:ExcelWorkbook>
+                    </xml>
+                    <![endif]-->
+                    <meta charset="UTF-8">
+                    <style>
+                        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+                        th, td { border: 1px solid black; text-align: center; vertical-align: middle; }
+                        /* Grid cell simulation styling */
+                        .grid { display: flex; }
+                        .grid > div { border-right: 1px solid #ccc; min-width: 20px; height: 20px; }
+                    </style>
+                </head>
+                <body>
+                    ${tableHtml}
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const fileName = `Form_STO_${new Date().toISOString().slice(0,10)}.xls`;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
         }
 
 
