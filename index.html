@@ -57,6 +57,8 @@
         /* Style untuk Tabel */
         .pallet-table {
             background-color: #27272a; /* Zinc 800 */
+            border-collapse: separate; /* Penting untuk sticky header */
+            border-spacing: 0;
         }
         .pallet-table th {
             background-color: #18181b; /* Zinc 900 (Lebih gelap) */
@@ -65,17 +67,18 @@
         /* Baris header (judul) */
         .pallet-table thead tr:first-child th {
             border-bottom: 2px solid #22c55e; /* Garis bawah hijau (Green 500) */
-            position: sticky;
+            position: sticky; /* Kunci header */
             top: 0;
-            z-index: 10;
+            z-index: 20; /* Layer paling atas */
+            background-color: #18181b; /* Background solid agar konten scroll tidak tembus */
         }
         /* Baris filter (input) */
         .pallet-table thead tr:nth-child(2) th {
-            background-color: #18181b; /* Pastikan background sama */
-            border-bottom: 1px solid #3f3f46; /* Garis bawah abu-abu */
+            background-color: #18181b; 
+            border-bottom: 1px solid #3f3f46; 
             position: sticky;
-            top: 37px; 
-            z-index: 10;
+            top: 40px; /* Sesuaikan dengan tinggi header baris pertama */
+            z-index: 15;
         }
         .pallet-table tr:nth-child(even) {
             background-color: #3f3f46; /* Zinc 700 */
@@ -124,9 +127,10 @@
             flex-direction: column;
             justify-content: center;
         }
-        /* Custom Scrollbar untuk area kartu STO */
+        /* Custom Scrollbar untuk area kartu STO dan Tabel History */
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
+            height: 8px; /* Scroll horizontal juga */
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #27272a; 
@@ -457,7 +461,8 @@
         const USERCONTROL_SHEET_NAME = 'Usercontrol';
         const AMBANG_BATAS_SHEET_NAME = 'Ambang Batas'; 
         const RANGE = 'A:H'; 
-        const HISTORY_RANGE = 'A:K'; 
+        // MODIFIKASI: Memperluas range agar kolom Driver (jika ada di kolom L ke atas) terbaca
+        const HISTORY_RANGE = 'A:Z'; 
 
         const MASTER_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${MASTER_SHEET_NAME}&range=${RANGE}`;
         const STOCK_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STOCK_SHEET_NAME}&range=${RANGE}`;
@@ -921,6 +926,9 @@
                                     { value: 'KELUAR HANWA', label: 'Keluar Hanwa (Pengiriman)' },
                                     { value: 'MASUK HANWA', label: 'Masuk Hanwa (Penerimaan)' }
                                 ], true)}</div>
+                                <!-- MODIFIKASI: Penambahan Kolom Input Driver -->
+                                <div>${createFormInput('Nama Driver (Optional)', 'driverName', 'text', false, 'Masukkan nama driver...')}</div>
+                                
                                 <div class="md:col-span-2">${createFormSelect('Kondisi Palet', 'kondisi', [
                                     { value: 'Baik', label: 'Baik' },
                                     { value: 'Rusak Ringan', label: 'Rusak Ringan' },
@@ -1119,6 +1127,9 @@
             const sizePalet = formData.get('sizePalet').trim();
             const tanggalTransaksi = formData.get('tanggalTransaksi').trim(); 
             const jenisTransaksi = formData.get('jenisTransaksi').trim();
+            // MODIFIKASI: Ambil data driver
+            const driverName = formData.get('driverName') ? formData.get('driverName').trim() : '';
+
             const kondisi = formData.get('kondisi').trim(); 
             const idPaletString = selectedPalletIds.join(',');
             const now = new Date();
@@ -1138,7 +1149,9 @@
                 'USERNAME': activeUser, 
                 'Username': activeUser, 
                 'username': activeUser, 
-                'Submitted By': activeUser
+                'Submitted By': activeUser,
+                // MODIFIKASI: Sertakan driver dalam payload (sesuai nama kolom di sheet)
+                'Driver': driverName
             };
 
             const transactionsToSend = [batchTransaction];
@@ -1918,15 +1931,34 @@
 
         // --- 11. HISTORY PALET ---
         const HISTORY_PALET_TITLE = 'History Palet';
+        
+        // MODIFIKASI #2: Tampilan Freeze Header
         function createHistoryPalletView() {
             return `
                 <div id="history-pallet-view" class="app-view p-6">
                     ${createHeader(HISTORY_PALET_TITLE, 'dashboard')}
-                    <div class="mb-4"><label class="block text-sm font-medium text-gray-300 mb-1">Filter berdasarkan ID Palet:</label><input type="text" id="history-filter" onkeyup="filterHistoryTable()" class="w-full max-w-md px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-green-500 focus:border-green-500" placeholder="Ketik ID Palet (contoh: P-001)..."></div>
-                    <h2 class="text-xl font-bold text-gray-300 mb-3 border-b border-gray-800 pb-2">Log Transaksi Palet (Batch)</h2>
-                    <div id="table-container-history" class="shadow-lg rounded-xl overflow-x-auto">
-                        <table id="pallet-table-history" class="pallet-table min-w-full divide-y divide-gray-700 rounded-xl"><thead class="bg-gray-800"><tr></tr></thead><tbody class="divide-y divide-gray-700"></tbody></table>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Filter berdasarkan ID Palet:</label>
+                        <input type="text" id="history-filter" onkeyup="filterHistoryTable()" class="w-full max-w-md px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-green-500 focus:border-green-500" placeholder="Ketik ID Palet (contoh: P-001)...">
                     </div>
+                    <h2 class="text-xl font-bold text-gray-300 mb-3 border-b border-gray-800 pb-2">Log Transaksi Palet (Batch)</h2>
+                    
+                    <!-- Kontainer table dibuat fixed height untuk scrolling internal (Freeze Header) -->
+                    <div id="table-container-history" class="shadow-lg rounded-xl overflow-hidden border border-gray-700 flex flex-col" style="max-height: calc(100vh - 250px);">
+                        <div class="overflow-auto custom-scrollbar flex-grow">
+                            <table id="pallet-table-history" class="pallet-table min-w-full divide-y divide-gray-700">
+                                <thead class="bg-gray-800">
+                                    <tr>
+                                        <!-- Header akan di-inject di sini -->
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-700">
+                                    <!-- Body -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div id="error-box-history" class="hidden mt-4 p-4 rounded-lg bg-red-800 text-white font-semibold"></div>
                 </div>
             `;
@@ -1948,7 +1980,12 @@
                     tableHeaderEl.innerHTML = ''; tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data.</td></tr>'; return;
                 }
                 statusMessageEl.textContent = `${data.length} Log Ditemukan`;
-                tableHeaderEl.innerHTML = headers.map(header => `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`).join('');
+                
+                // Render Header
+                tableHeaderEl.innerHTML = headers.map(header => 
+                    `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300 bg-zinc-900 sticky top-0 z-10 border-b-2 border-green-500">${header}</th>`
+                ).join('');
+                
                 renderHistoryTableBody(data);
             } catch (error) {
                 if (statusMessageEl) statusMessageEl.textContent = 'Gagal memuat data.';
