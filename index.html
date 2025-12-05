@@ -197,7 +197,9 @@
         let masterPalletData = []; 
         let masterPalletHeaders = []; 
         let stockPalletData = []; 
-        let stockPalletHeaders = []; // ADDED: Global headers for stock
+        let stockPalletHeaders = []; // Global headers for stock
+        let dataPickupData = []; // NEW: Data Pickup
+        let dataPickupHeaders = []; // NEW: Headers Pickup
         let historyPalletData = []; 
         let historyPalletHeaders = []; 
         let selectedPalletIds = []; 
@@ -206,10 +208,13 @@
         let formSTOData = []; 
         let reportSTOData = []; 
         let criticalStockAlerts = []; 
+        
         let isMasterDataFetched = false;
         let isStockDataFetched = false; 
+        let isDataPickupFetched = false; // NEW
         let isHistoryDataFetched = false;
         let isAmbangBatasDataFetched = false;
+        
         let chartInstances = {
             palletAging: null,
             palletCondition: null,
@@ -282,12 +287,14 @@
             }
 
             isMasterDataFetched = false;
-            isStockDataFetched = false; // Reset
+            isStockDataFetched = false; 
+            isDataPickupFetched = false; // Reset New
             isHistoryDataFetched = false;
             isAmbangBatasDataFetched = false;
             
             masterPalletData = [];
             stockPalletData = [];
+            dataPickupData = []; // Reset New
             historyPalletData = [];
             ambangBatasData = [];
             
@@ -315,6 +322,10 @@
                 case 'stockPalet':
                     container.innerHTML = createStockPalletView(); 
                     fetchStockPalletData(); 
+                    break;
+                case 'dataPickupDriver': // NEW CASE
+                    container.innerHTML = createDataPickupView();
+                    fetchDataPickupData();
                     break;
                 case 'transaksiPalet':
                     selectedPalletIds = []; 
@@ -414,6 +425,12 @@
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Stock Palet</h2><p class="text-sm text-gray-400">Ringkasan Stok Palet</p></div>
                         </div>
 
+                        <!-- Data Pickup Driver: Amber Outline (NEW) -->
+                        <div onclick="navigate('dataPickupDriver')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-amber-500">
+                            <svg class="icon w-16 h-16 mb-4 mx-auto text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                            <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Data Pickup Driver</h2><p class="text-sm text-gray-400">Status & Data Driver</p></div>
+                        </div>
+
                         <!-- Transaksi Palet: Orange Outline -->
                         <div onclick="navigate('transaksiPalet')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-orange-500">
                             <svg class="icon w-16 h-16 mb-4 mx-auto text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-1.447 3.382l-.675.337M4 12a7 7 0 1014 0 7 7 0 01-14 0z"></path></svg>
@@ -455,17 +472,18 @@
         const GOOGLE_SHEET_ID = '1YiIDIa0Ysi-O0k4askOtd8Qf66KnQuJxlLMngDlqM1A'; 
         const MASTER_SHEET_NAME = 'MASTER PALET'; 
         const STOCK_SHEET_NAME = 'Ringkasan Stok Palet'; 
+        const DATA_PICKUP_SHEET_NAME = 'Data pickup palet driver'; // NEW
         const TRANSACTION_SHEET_NAME = 'Log Transaksi Palet Batch'; 
         const STO_SHEET_NAME = 'STOCK OPNAME'; 
         const FORM_STO_SHEET_NAME = 'Form STO'; 
         const USERCONTROL_SHEET_NAME = 'Usercontrol';
         const AMBANG_BATAS_SHEET_NAME = 'Ambang Batas'; 
         const RANGE = 'A:H'; 
-        // MODIFIKASI: Memperluas range agar kolom Driver (jika ada di kolom L ke atas) terbaca
         const HISTORY_RANGE = 'A:Z'; 
 
         const MASTER_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${MASTER_SHEET_NAME}&range=${RANGE}`;
         const STOCK_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STOCK_SHEET_NAME}&range=${RANGE}`;
+        const DATA_PICKUP_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${DATA_PICKUP_SHEET_NAME}&range=A:Z`; // NEW
         const HISTORY_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${TRANSACTION_SHEET_NAME}&range=${HISTORY_RANGE}`;
         const FORM_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${FORM_STO_SHEET_NAME}&range=A:Z`;
         
@@ -492,11 +510,11 @@
             }
         }
         
-        // FUNGSI PARSING GVIZ (MENGUBAH SEMUA HEADER JADI UPPERCASE)
+        // FUNGSI PARSING GVIZ
         function parseGVizData(data) {
             const columns = data.table.cols.map(col => ({
                 id: col.id,
-                label: (col.label || col.id).toUpperCase().trim()  // HEADER JADI UPPERCASE DI SINI
+                label: (col.label || col.id).toUpperCase().trim() 
             })).filter(col => col.label); 
 
             const rows = data.table.rows;
@@ -623,8 +641,8 @@
                     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
                     await initializeFirebase();
                     // Reset cache
-                    masterPalletData = []; historyPalletData = []; ambangBatasData = [];
-                    isMasterDataFetched = false; isHistoryDataFetched = false; isAmbangBatasDataFetched = false;
+                    masterPalletData = []; historyPalletData = []; ambangBatasData = []; dataPickupData = [];
+                    isMasterDataFetched = false; isHistoryDataFetched = false; isAmbangBatasDataFetched = false; isDataPickupFetched = false;
                     renderApp('dashboard');
                 } else {
                     errorBox.textContent = "Username atau Password salah.";
@@ -645,8 +663,8 @@
             currentUser = null;
             if (auth) signOut(auth);
             auth = null; db = null; userId = null;
-            masterPalletData = []; historyPalletData = []; ambangBatasData = [];
-            isMasterDataFetched = false; isHistoryDataFetched = false; isAmbangBatasDataFetched = false;
+            masterPalletData = []; historyPalletData = []; ambangBatasData = []; dataPickupData = [];
+            isMasterDataFetched = false; isHistoryDataFetched = false; isAmbangBatasDataFetched = false; isDataPickupFetched = false;
             renderApp('login');
         }
         
@@ -787,10 +805,9 @@
         async function fetchStockPalletData() {
             const statusMessageEl = document.getElementById(getStatusMessageId(STOCK_PALET_TITLE));
             const summaryContainerEl = document.getElementById('stock-summary-container');
-            const tableHeadEl = document.querySelector('#pallet-table-stock thead'); // Changed selector to thead
+            const tableHeadEl = document.querySelector('#pallet-table-stock thead'); 
             const tableBodyEl = document.querySelector('#pallet-table-stock tbody');
             
-            // Update UI loading state
             if(summaryContainerEl) summaryContainerEl.innerHTML = createSummaryCardPlaceholder('Memuat...', 'Total Palet Hanwa');
             if(tableHeadEl) tableHeadEl.innerHTML = '';
             if(tableBodyEl) tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Memuat data...</td></tr>';
@@ -799,7 +816,7 @@
                 const parsedData = await fetchSheetData(STOCK_PALLET_URL);
                 const { data, headers } = parsedData;
                 stockPalletData = data; 
-                stockPalletHeaders = headers; // Store headers globally
+                stockPalletHeaders = headers; 
                 isStockDataFetched = true;
                 
                 if (statusMessageEl && summaryContainerEl && tableBodyEl) {
@@ -811,7 +828,6 @@
                     }
                     statusMessageEl.textContent = `${data.length} Baris Ringkasan Ditemukan`;
                     
-                    // Hitung Grand Total
                     const totalIndex = headers.length > 0 ? headers.findIndex(h => h.toUpperCase().includes('TOTAL')) : -1;
                     let grandTotal = 0;
                     data.forEach(item => {
@@ -820,15 +836,13 @@
                     });
                     summaryContainerEl.innerHTML = createSummaryCard(grandTotal.toLocaleString('id-ID'), 'Total Palet Hanwa', 'text-green-400');
 
-                    // RENDER HEADER DENGAN FILTER (MODIFIKASI #1)
                     const headerRow = `<tr class="bg-gray-800">${headers.map(header => `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-green-300">${header}</th>`).join('')}</tr>`;
                     
-                    // Tambahkan Input Filter
                     const filterRow = `<tr class="bg-gray-800">${headers.map(header => `<th class="p-1 align-top"><input type="text" class="w-full px-2 py-1 text-xs bg-zinc-700 border border-zinc-600 rounded text-white placeholder-zinc-400 focus:ring-green-500 focus:border-green-500 stock-filter-input" placeholder="Filter..." data-header="${header}" onkeyup="filterStockPalletTable()"></th>`).join('')}</tr>`;
 
                     tableHeadEl.innerHTML = headerRow + filterRow;
                     
-                    renderStockPalletTableBody(data); // Render Body Logic terpisah
+                    renderStockPalletTableBody(data); 
                 }
 
                 const formFilterEl = document.getElementById('formStoPalletNameFilter');
@@ -842,7 +856,6 @@
             }
         }
 
-        // FUNGSI RENDER BODY STOCK (MODIFIKASI #1: WARNA KOLOM)
         function renderStockPalletTableBody(data) {
             const tableBodyEl = document.querySelector('#pallet-table-stock tbody');
             if (!tableBodyEl) return;
@@ -855,12 +868,10 @@
             tableBodyEl.innerHTML = data.map((item, index) => {
                 const rowBgClass = (index % 2 === 0 ? 'bg-zinc-800' : 'bg-zinc-700');
                 
-                // Map kolom dengan logic pewarnaan khusus
                 const cells = stockPalletHeaders.map(header => {
                     const value = item[header] || '-';
                     const h = header.toUpperCase();
                     
-                    // Logic Pewarnaan berdasarkan Header
                     let cellClass = "px-6 py-3 whitespace-nowrap text-sm ";
                     
                     if (h.includes('KOSONG')) {
@@ -882,7 +893,6 @@
             }).join('');
         }
 
-        // FUNGSI FILTER STOCK (MODIFIKASI #1)
         function filterStockPalletTable() {
             const filterInputs = document.querySelectorAll('#pallet-table-stock .stock-filter-input');
             const filters = {};
@@ -905,6 +915,172 @@
             renderStockPalletTableBody(filteredData);
         }
 
+        // --- NEW: 8.5 DATA PICKUP DRIVER (Page Baru) ---
+        const DATA_PICKUP_TITLE = 'Data Pickup Driver';
+
+        function createDataPickupView() {
+            return `
+                <div id="data-pickup-view" class="app-view p-6">
+                    ${createHeader(DATA_PICKUP_TITLE, 'dashboard')}
+                    <h2 class="text-xl font-bold text-gray-300 mb-4 border-b border-gray-800 pb-2">Status Pickup Palet</h2>
+                    
+                    <!-- SUMMARY CARDS: Total Hanwa, Open, Close -->
+                    <div id="pickup-summary-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <!-- Akan diisi oleh JS -->
+                    </div>
+
+                    <h2 class="text-xl font-bold text-gray-300 mb-3 border-b border-gray-800 pb-2">Detail Data Driver</h2>
+                    
+                    <!-- TABLE CONTAINER (Sama seperti Stock Palet) -->
+                    <div id="table-container-pickup" class="shadow-lg rounded-xl overflow-x-auto">
+                        <table id="pallet-table-pickup" class="pallet-table min-w-full divide-y divide-gray-700 rounded-xl">
+                            <thead class="bg-gray-800"></thead>
+                            <tbody class="divide-y divide-gray-700"></tbody>
+                        </table>
+                    </div>
+                    <div id="error-box-pickup" class="hidden mt-4 p-4 rounded-lg bg-red-800 text-white font-semibold"></div>
+                </div>
+            `;
+        }
+
+        async function fetchDataPickupData() {
+            const statusMessageEl = document.getElementById(getStatusMessageId(DATA_PICKUP_TITLE));
+            const summaryContainerEl = document.getElementById('pickup-summary-container');
+            const tableHeadEl = document.querySelector('#pallet-table-pickup thead'); 
+            const tableBodyEl = document.querySelector('#pallet-table-pickup tbody');
+            
+            if(summaryContainerEl) {
+                summaryContainerEl.innerHTML = `
+                    ${createSummaryCardPlaceholder('...', 'Total Palet Hanwa')}
+                    ${createSummaryCardPlaceholder('...', 'Status Pickup Open')}
+                    ${createSummaryCardPlaceholder('...', 'Status Pickup Close')}
+                `;
+            }
+            if(tableHeadEl) tableHeadEl.innerHTML = '';
+            if(tableBodyEl) tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Memuat data...</td></tr>';
+
+            try {
+                const parsedData = await fetchSheetData(DATA_PICKUP_URL);
+                const { data, headers } = parsedData;
+                dataPickupData = data; 
+                dataPickupHeaders = headers;
+                isDataPickupFetched = true;
+
+                if (statusMessageEl && summaryContainerEl && tableBodyEl) {
+                    if (data.length === 0) {
+                        statusMessageEl.textContent = "Data tidak ditemukan.";
+                        tableBodyEl.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Tidak ada data.</td></tr>';
+                        summaryContainerEl.innerHTML = `
+                            ${createSummaryCardPlaceholder(0, 'Total Palet Hanwa')}
+                            ${createSummaryCardPlaceholder(0, 'Status Pickup Open')}
+                            ${createSummaryCardPlaceholder(0, 'Status Pickup Close')}
+                        `;
+                        return;
+                    }
+                    statusMessageEl.textContent = `${data.length} Data Driver Ditemukan`;
+
+                    // LOGIC SUMMARY:
+                    // 1. Total Palet Hanwa (Kita ambil dari jumlah total baris atau kolom 'Total Palet' jika ada)
+                    //    User meminta "bagian atas Total Palet Hanwa 307". Kita hitung total baris sebagai default.
+                    //    Jika ada kolom 'TOTAL PALET', kita sum. Jika tidak, count rows.
+                    let totalPaletHanwa = 0;
+                    const totalColIndex = headers.findIndex(h => h.includes('TOTAL') || h.includes('JUMLAH'));
+                    
+                    if (totalColIndex !== -1) {
+                         const colName = headers[totalColIndex];
+                         data.forEach(item => {
+                            const val = parseFloat(String(item[colName]).replace(/[^0-9.,]/g, '').replace(',', '.') || 0);
+                            totalPaletHanwa += val;
+                         });
+                    } else {
+                        // Fallback count rows
+                        totalPaletHanwa = data.length;
+                    }
+
+                    // 2. Summary Status OPEN dan CLOSE
+                    // Cari kolom "STATUS PICKUP" atau "STATUS"
+                    const statusCol = headers.find(h => h.includes('STATUS'));
+                    let countOpen = 0;
+                    let countClose = 0;
+
+                    if (statusCol) {
+                        data.forEach(item => {
+                            const statusVal = String(item[statusCol] || '').toUpperCase().trim();
+                            if (statusVal.includes('OPEN')) countOpen++;
+                            if (statusVal.includes('CLOSE')) countClose++;
+                        });
+                    }
+
+                    // Render Cards
+                    // Note: User menyebut angka "307" sebagai contoh Total Palet Hanwa.
+                    summaryContainerEl.innerHTML = `
+                        ${createSummaryCard(totalPaletHanwa.toLocaleString('id-ID'), 'Total Palet Hanwa', 'text-amber-400')}
+                        ${createSummaryCard(countOpen.toLocaleString('id-ID'), 'Status Pickup OPEN', 'text-green-400')}
+                        ${createSummaryCard(countClose.toLocaleString('id-ID'), 'Status Pickup CLOSE', 'text-red-400')}
+                    `;
+
+                    // RENDER TABLE (Sticky Header + Filter)
+                    const headerRow = `<tr class="bg-gray-800">${headers.map(header => `<th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-amber-400">${header}</th>`).join('')}</tr>`;
+                    const filterRow = `<tr class="bg-gray-800">${headers.map(header => `<th class="p-1 align-top"><input type="text" class="w-full px-2 py-1 text-xs bg-zinc-700 border border-zinc-600 rounded text-white placeholder-zinc-400 focus:ring-amber-500 focus:border-amber-500 pickup-filter-input" placeholder="Filter..." data-header="${header}" onkeyup="filterDataPickupTable()"></th>`).join('')}</tr>`;
+
+                    tableHeadEl.innerHTML = headerRow + filterRow;
+                    renderDataPickupTableBody(data);
+                }
+            } catch (error) {
+                console.error("Fetch Pickup Error:", error);
+                 if (statusMessageEl) statusMessageEl.textContent = 'Gagal memuat data.';
+            }
+        }
+
+        function renderDataPickupTableBody(data) {
+            const tableBodyEl = document.querySelector('#pallet-table-pickup tbody');
+            if (!tableBodyEl) return;
+            
+            if (data.length === 0) {
+                tableBodyEl.innerHTML = `<tr><td colspan="${dataPickupHeaders.length || 5}" class="text-center py-4 text-gray-500">Data tidak ditemukan.</td></tr>`;
+                return;
+            }
+
+            tableBodyEl.innerHTML = data.map((item, index) => {
+                const rowBgClass = (index % 2 === 0 ? 'bg-zinc-800' : 'bg-zinc-700');
+                const cells = dataPickupHeaders.map(header => {
+                    const value = item[header] || '-';
+                    // Optional: Color coding for status
+                    let cellClass = "px-6 py-3 whitespace-nowrap text-sm text-gray-200";
+                    if (header.includes('STATUS')) {
+                        const v = String(value).toUpperCase();
+                        if (v.includes('OPEN')) cellClass = "px-6 py-3 whitespace-nowrap text-sm text-green-400 font-bold";
+                        if (v.includes('CLOSE')) cellClass = "px-6 py-3 whitespace-nowrap text-sm text-red-400 font-bold";
+                    }
+                    return `<td class="${cellClass}">${value}</td>`;
+                }).join('');
+                return `<tr class="${rowBgClass}">${cells}</tr>`;
+            }).join('');
+        }
+
+        function filterDataPickupTable() {
+            const filterInputs = document.querySelectorAll('#pallet-table-pickup .pickup-filter-input');
+            const filters = {};
+            filterInputs.forEach(input => {
+                const header = input.dataset.header;
+                const value = input.value.toUpperCase().trim();
+                if (value) filters[header] = value;
+            });
+
+            const filterKeys = Object.keys(filters);
+            let filteredData = dataPickupData; 
+            if (filterKeys.length > 0) {
+                filteredData = dataPickupData.filter(item => {
+                    return filterKeys.every(header => {
+                        const itemValue = String(item[header] || '').toUpperCase();
+                        return itemValue.includes(filters[header]);
+                    });
+                });
+            }
+            renderDataPickupTableBody(filteredData);
+        }
+
+
         // --- 9. TRANSAKSI PALET ---
         const TRANSACTION_PALET_TITLE = 'Transaksi Palet';
 
@@ -926,7 +1102,6 @@
                                     { value: 'KELUAR HANWA', label: 'Keluar Hanwa (Pengiriman)' },
                                     { value: 'MASUK HANWA', label: 'Masuk Hanwa (Penerimaan)' }
                                 ], true)}</div>
-                                <!-- MODIFIKASI: Penambahan Kolom Input Driver -->
                                 <div>${createFormInput('Nama Driver (Optional)', 'driverName', 'text', false, 'Masukkan nama driver...')}</div>
                                 
                                 <div class="md:col-span-2">${createFormSelect('Kondisi Palet', 'kondisi', [
@@ -1127,7 +1302,6 @@
             const sizePalet = formData.get('sizePalet').trim();
             const tanggalTransaksi = formData.get('tanggalTransaksi').trim(); 
             const jenisTransaksi = formData.get('jenisTransaksi').trim();
-            // MODIFIKASI: Ambil data driver
             const driverName = formData.get('driverName') ? formData.get('driverName').trim() : '';
 
             const kondisi = formData.get('kondisi').trim(); 
@@ -1150,7 +1324,6 @@
                 'Username': activeUser, 
                 'username': activeUser, 
                 'Submitted By': activeUser,
-                // MODIFIKASI: Sertakan driver dalam payload (sesuai nama kolom di sheet)
                 'Driver': driverName
             };
 
@@ -2318,6 +2491,8 @@
             
             // Stock Palet Filters (NEW)
             window.filterStockPalletTable = filterStockPalletTable;
+            // Data Pickup Filters (NEW)
+            window.filterDataPickupTable = filterDataPickupTable;
 
             // STO Functions
             window.submitSTO = submitSTO;
