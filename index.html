@@ -208,6 +208,7 @@
         let formSTOData = []; 
         let reportSTOData = []; 
         let logSTOScannerData = []; // NEW: Log Stock Opname (STO by Scanner)
+        let logSTOScannerHeaders = []; // NEW: header asli (posisi kolom) untuk fallback
         let criticalStockAlerts = []; 
         
         let isMasterDataFetched = false;
@@ -490,7 +491,7 @@
         const FORM_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${FORM_STO_SHEET_NAME}&range=A:Z`;
         
         const STO_REPORT_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STO_SHEET_NAME}&range=A:Z`; 
-        const LOG_STO_SCANNER_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOG_STO_SCANNER_SHEET_NAME}&range=A:Z`; // NEW
+        const LOG_STO_SCANNER_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOG_STO_SCANNER_SHEET_NAME}&range=A:Z&headers=1`; // NEW - headers=1 wajib karena semua kolom di sheet ini bertipe teks (GViz sering gagal auto-deteksi header kalau semua kolom seragam tipe teks)
         
         const USERCONTROL_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${USERCONTROL_SHEET_NAME}&range=A:C`;
         const AMBANG_BATAS_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${AMBANG_BATAS_SHEET_NAME}&range=A:C`;
@@ -2214,14 +2215,34 @@
         //              Status Lama, Lokasi Lama, Status Baru, Lokasi Baru, Hasil
         // ==========================================
 
+        // Urutan kolom TETAP di sheet "Log Stock Opname" (dibuat oleh Apps Script handleStockOpname):
+        // 0:Timestamp 1:Username 2:ID Palet 3:Nama Palet 4:Size 5:Status Lama 6:Lokasi Lama 7:Status Baru 8:Lokasi Baru 9:Hasil
+        const LOG_STO_COL = { TIMESTAMP: 0, NAMA_PALET: 3, SIZE: 4, HASIL: 9 };
+
+        // Ambil nilai kolom dengan aman: coba pakai nama header hasil deteksi GViz dahulu,
+        // kalau kosong/tidak ada fallback ke posisi kolom tetap (karena struktur sheet ini baku).
+        function getLogSTOField(row, expectedLabel, posIndex) {
+            if (row.hasOwnProperty(expectedLabel) && row[expectedLabel] !== '' && row[expectedLabel] !== undefined) {
+                return row[expectedLabel];
+            }
+            const posLabel = logSTOScannerHeaders[posIndex];
+            if (posLabel !== undefined && row.hasOwnProperty(posLabel)) {
+                return row[posLabel];
+            }
+            return '';
+        }
+
         async function fetchLogSTOScannerData() {
             try {
                 const parsedData = await fetchSheetData(LOG_STO_SCANNER_URL);
                 logSTOScannerData = parsedData.data;
-                console.log('[Log Stock Opname] Baris termuat:', logSTOScannerData.length, logSTOScannerData.slice(0, 3));
+                logSTOScannerHeaders = parsedData.headers;
+                console.log('[Log Stock Opname] Header terdeteksi:', logSTOScannerHeaders);
+                console.log('[Log Stock Opname] Baris termuat:', logSTOScannerData.length);
+                console.table(logSTOScannerData);
 
                 const uniqueNames = [...new Set(
-                    logSTOScannerData.map(item => String(item['NAMA PALET'] || '').trim()).filter(n => n)
+                    logSTOScannerData.map(item => String(getLogSTOField(item, 'NAMA PALET', LOG_STO_COL.NAMA_PALET) || '').trim()).filter(n => n)
                 )].sort();
 
                 const nameSelect = document.getElementById('scannerReportPalletName');
@@ -2271,14 +2292,15 @@
             const groups = {};
 
             logSTOScannerData.forEach(row => {
-                const parsedTs = parseIndoTimestamp(row['TIMESTAMP']);
+                const rawTimestamp = getLogSTOField(row, 'TIMESTAMP', LOG_STO_COL.TIMESTAMP);
+                const parsedTs = parseIndoTimestamp(rawTimestamp);
                 // Jika timestamp tidak bisa diparse, tetap ikutkan barisnya (jangan hilang begitu saja)
                 // supaya data tetap kelihatan walau formatnya di luar dugaan - hanya bulan/tahun jadi "Tidak Diketahui".
                 const rowMonth = parsedTs ? parsedTs.month : 'Tidak Diketahui';
                 const rowYear = parsedTs ? parsedTs.year : '-';
-                const rowName = String(row['NAMA PALET'] || '').trim();
-                const rowSize = String(row['SIZE'] || '').trim();
-                const rowHasil = String(row['HASIL'] || '').trim();
+                const rowName = String(getLogSTOField(row, 'NAMA PALET', LOG_STO_COL.NAMA_PALET) || '').trim();
+                const rowSize = String(getLogSTOField(row, 'SIZE', LOG_STO_COL.SIZE) || '').trim();
+                const rowHasil = String(getLogSTOField(row, 'HASIL', LOG_STO_COL.HASIL) || '').trim();
 
                 const matchMonth = month ? (rowMonth === month) : true;
                 const matchYear = year ? (rowYear === year) : true;
