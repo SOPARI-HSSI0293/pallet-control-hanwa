@@ -542,16 +542,31 @@
             'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
         ];
 
-        // Parsing timestamp string format Sheet: "17/7/2026, 05.55.11" -> { day, month: 'Juli', year: '2026' }
-        // Dibuat robust terhadap kemungkinan value berupa string ATAU objek Date dari GViz.
+        // Parsing timestamp dari sheet, contoh: "17/7/2026, 05.55.11" -> { day, month: 'Juli', year: '2026' }
+        // Dibuat robust terhadap: value string biasa, value objek Date GViz (mis. "Date(2026,6,17,5,55,11)"),
+        // dan variasi pemisah tanggal/waktu (koma, spasi, slash, strip).
         function parseIndoTimestamp(tsVal) {
             if (!tsVal) return null;
             var tsStr = String(tsVal).trim();
             if (!tsStr) return null;
 
-            // Ambil bagian tanggal saja (sebelum koma), contoh: "17/7/2026"
+            // Kasus 1: GViz mengirim objek Date mentah, contoh: "Date(2026,6,17,5,55,11)"
+            // Catatan: bulan pada format ini 0-based (0 = Januari)
+            var gvizMatch = tsStr.match(/^Date\((\d+),\s*(\d+),\s*(\d+)/);
+            if (gvizMatch) {
+                var gYear = parseInt(gvizMatch[1], 10);
+                var gMonthNum = parseInt(gvizMatch[2], 10) + 1;
+                var gDay = parseInt(gvizMatch[3], 10);
+                if (gMonthNum < 1 || gMonthNum > 12) return null;
+                return { day: gDay, month: MONTHS_ID[gMonthNum - 1], monthNum: gMonthNum, year: String(gYear) };
+            }
+
+            // Kasus 2: String biasa, ambil bagian tanggal saja (sebelum koma jika ada)
             var datePart = tsStr.split(',')[0].trim();
-            var parts = datePart.split('/');
+            if (!datePart) return null;
+
+            // Dukung pemisah '/' maupun '-'
+            var parts = datePart.split(/[\/\-]/).map(function(p){ return p.trim(); });
             if (parts.length < 3) return null;
 
             var day = parseInt(parts[0], 10);
@@ -559,6 +574,7 @@
             var year = parseInt(parts[2], 10);
 
             if (isNaN(monthNum) || isNaN(year) || monthNum < 1 || monthNum > 12) return null;
+            if (year < 100) year += 2000; // antisipasi format tahun 2 digit
 
             return { day: day, month: MONTHS_ID[monthNum - 1], monthNum: monthNum, year: String(year) };
         }
@@ -2202,6 +2218,7 @@
             try {
                 const parsedData = await fetchSheetData(LOG_STO_SCANNER_URL);
                 logSTOScannerData = parsedData.data;
+                console.log('[Log Stock Opname] Baris termuat:', logSTOScannerData.length, logSTOScannerData.slice(0, 3));
 
                 const uniqueNames = [...new Set(
                     logSTOScannerData.map(item => String(item['NAMA PALET'] || '').trim()).filter(n => n)
@@ -2229,8 +2246,9 @@
             );
             if (!match) return 0;
 
-            // Cari nama kolom yang mengandung kata "TOTAL" (misal "TOTAL" atau "TOTAL PALET")
-            const totalKey = Object.keys(match).find(k => k.toUpperCase().includes('TOTAL'));
+            // Prioritaskan kolom yang namanya PERSIS "TOTAL", baru fallback ke kolom yang mengandung kata TOTAL
+            let totalKey = Object.keys(match).find(k => k.trim().toUpperCase() === 'TOTAL');
+            if (!totalKey) totalKey = Object.keys(match).find(k => k.toUpperCase().includes('TOTAL'));
             if (!totalKey) return 0;
 
             const rawVal = String(match[totalKey] || '0').replace(/[^0-9.,-]/g, '').replace(',', '.');
@@ -2254,10 +2272,10 @@
 
             logSTOScannerData.forEach(row => {
                 const parsedTs = parseIndoTimestamp(row['TIMESTAMP']);
-                if (!parsedTs) return; // Skip baris dengan timestamp tidak valid
-
-                const rowMonth = parsedTs.month;
-                const rowYear = parsedTs.year;
+                // Jika timestamp tidak bisa diparse, tetap ikutkan barisnya (jangan hilang begitu saja)
+                // supaya data tetap kelihatan walau formatnya di luar dugaan - hanya bulan/tahun jadi "Tidak Diketahui".
+                const rowMonth = parsedTs ? parsedTs.month : 'Tidak Diketahui';
+                const rowYear = parsedTs ? parsedTs.year : '-';
                 const rowName = String(row['NAMA PALET'] || '').trim();
                 const rowSize = String(row['SIZE'] || '').trim();
                 const rowHasil = String(row['HASIL'] || '').trim();
@@ -2276,9 +2294,9 @@
                     };
                 }
 
-                if (rowHasil === 'Cocok') groups[key].cocok++;
-                else if (rowHasil === 'Selisih') groups[key].selisih++;
-                else if (rowHasil === 'Tidak Terdaftar') groups[key].tidakTerdaftar++;
+                if (rowHasil.toLowerCase() === 'cocok') groups[key].cocok++;
+                else if (rowHasil.toLowerCase() === 'selisih') groups[key].selisih++;
+                else if (rowHasil.toLowerCase() === 'tidak terdaftar') groups[key].tidakTerdaftar++;
             });
 
             const groupList = Object.values(groups);
