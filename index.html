@@ -33,6 +33,7 @@
             color: #9ca3af; /* Warna ikon default (abu-abu terang) */
             transition: color 0.3s ease-in-out;
         }
+        /* Hover effect specific to cards handled inline/utility classes now */
         
         /* Style untuk App View */
         .app-view {
@@ -206,12 +207,14 @@
         let ambangBatasData = []; 
         let formSTOData = []; 
         let reportSTOData = []; 
-        let logSTODataRaw = []; // Log STO Raw Data
+        let logSTOData = []; // NEW: Log Stock Opname (Scanner)
+        let logSTOHeaders = []; // NEW
+        let scannerReportSummary = []; // NEW: Hasil ringkasan report scanner
         let criticalStockAlerts = []; 
         
         let isMasterDataFetched = false;
         let isStockDataFetched = false; 
-        let isDataPickupFetched = false; 
+        let isDataPickupFetched = false; // NEW
         let isHistoryDataFetched = false;
         let isAmbangBatasDataFetched = false;
         
@@ -220,6 +223,7 @@
             palletCondition: null,
             palletVelocity: null
         };
+
 
         /**
          * Inisialisasi Firebase
@@ -236,10 +240,12 @@
                     const authCallback = (user) => {
                         if (user) {
                             userId = user.uid;
+                            console.log("Firebase Auth State Changed. User ID:", userId);
                             resolve();
                         } else {
                             signInAnonymously(auth).then(cred => {
                                 userId = cred.user.uid;
+                                console.log("Anonymous User ID:", userId);
                                 resolve();
                             }).catch(err => {
                                  console.error("Anonymous sign-in failed:", err);
@@ -285,16 +291,16 @@
 
             isMasterDataFetched = false;
             isStockDataFetched = false; 
-            isDataPickupFetched = false; 
+            isDataPickupFetched = false; // Reset New
             isHistoryDataFetched = false;
             isAmbangBatasDataFetched = false;
             
             masterPalletData = [];
             stockPalletData = [];
-            dataPickupData = []; 
+            dataPickupData = []; // Reset New
             historyPalletData = [];
             ambangBatasData = [];
-            logSTODataRaw = [];
+            logSTOData = []; // Reset New (Scanner Report)
             
             renderApp(page);
         }
@@ -321,7 +327,7 @@
                     container.innerHTML = createStockPalletView(); 
                     fetchStockPalletData(); 
                     break;
-                case 'dataPickupDriver':
+                case 'dataPickupDriver': // NEW CASE
                     container.innerHTML = createDataPickupView();
                     fetchDataPickupData();
                     break;
@@ -411,41 +417,49 @@
                     <div id="critical-stock-alert-container" class="mb-6"></div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+                        <!-- Master Palet: Blue Outline -->
                         <div onclick="navigate('masterPalet')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-blue-500">
                             <svg class="icon w-16 h-16 mb-4 mx-auto text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10m-4-11l-4 2.12V17M16 12l4 2.12V17"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Master Palet</h2><p class="text-sm text-gray-400">Data Induk Palet</p></div>
                         </div>
 
+                        <!-- Stock Palet: Emerald Outline -->
                         <div onclick="navigate('stockPalet')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-emerald-500">
                             <svg class="icon w-16 h-16 mb-4 mx-auto text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 12V3h16v9m-4-4l-4 4-4-4m8 8h-8v4h8v-4z"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Stock Palet</h2><p class="text-sm text-gray-400">Ringkasan Stok Palet</p></div>
                         </div>
 
+                        <!-- Data Pickup Driver: Amber Outline (NEW) -->
                         <div onclick="navigate('dataPickupDriver')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-amber-500">
                             <svg class="icon w-16 h-16 mb-4 mx-auto text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Data Pickup Driver</h2><p class="text-sm text-gray-400">Status & Data Driver</p></div>
                         </div>
 
+                        <!-- Transaksi Palet: Orange Outline -->
                         <div onclick="navigate('transaksiPalet')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-orange-500">
                             <svg class="icon w-16 h-16 mb-4 mx-auto text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-1.447 3.382l-.675.337M4 12a7 7 0 1014 0 7 7 0 01-14 0z"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Transaksi Palet</h2><p class="text-sm text-gray-400">Log Pergerakan Palet</p></div>
                         </div>
 
+                        <!-- STO Palet: Purple Outline -->
                         <div onclick="navigate('stoPalet')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-purple-500">
                             <svg class="icon w-16 h-16 mb-4 mx-auto text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">STO Palet</h2><p class="text-sm text-gray-400">Stock Taking Palet</p></div>
                         </div>
                         
+                        <!-- Form & Report STO: Indigo Outline -->
                         <div onclick="navigate('formReportSTO')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-indigo-500">
                             <svg class="icon w-16 h-16 mb-4 mx-auto text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Form & Report STO</h2><p class="text-sm text-gray-400">Cetak Form & Laporan</p></div>
                         </div>
 
+                        <!-- Dashboard Analitik: Cyan Outline -->
                         <div onclick="navigate('analyticsDashboard')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-cyan-500">
                              <svg class="icon w-16 h-16 mb-4 mx-auto text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">Dashboard Analitik</h2><p class="text-sm text-gray-400">Grafik & Wawasan Palet</p></div>
                         </div>
 
+                        <!-- History Palet: Rose Outline -->
                         <div onclick="navigate('historyPalet')" class="menu-card rounded-xl p-8 shadow-xl border-l-4 border-rose-500">
                             <svg class="icon w-16 h-16 mb-4 mx-auto text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             <div class="text-center"><h2 class="text-xl font-bold uppercase mb-1 text-gray-100">History Palet</h2><p class="text-sm text-gray-400">Log Transaksi Palet</p></div>
@@ -462,11 +476,11 @@
         const GOOGLE_SHEET_ID = '1YiIDIa0Ysi-O0k4askOtd8Qf66KnQuJxlLMngDlqM1A'; 
         const MASTER_SHEET_NAME = 'MASTER PALET'; 
         const STOCK_SHEET_NAME = 'Ringkasan Stok Palet'; 
-        const DATA_PICKUP_SHEET_NAME = 'Data pickup palet driver'; 
+        const DATA_PICKUP_SHEET_NAME = 'Data pickup palet driver'; // NEW
         const TRANSACTION_SHEET_NAME = 'Log Transaksi Palet Batch'; 
         const STO_SHEET_NAME = 'STOCK OPNAME'; 
         const FORM_STO_SHEET_NAME = 'Form STO'; 
-        const LOG_STO_SHEET_NAME = 'Log Stock Opname'; 
+        const LOG_STO_SHEET_NAME = 'Log Stock Opname'; // NEW: Laporan STO by Scanner
         const USERCONTROL_SHEET_NAME = 'Usercontrol';
         const AMBANG_BATAS_SHEET_NAME = 'Ambang Batas'; 
         const RANGE = 'A:H'; 
@@ -474,12 +488,18 @@
 
         const MASTER_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${MASTER_SHEET_NAME}&range=${RANGE}`;
         const STOCK_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STOCK_SHEET_NAME}&range=${RANGE}`;
-        const DATA_PICKUP_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${DATA_PICKUP_SHEET_NAME}&range=A:Z`; 
+        const DATA_PICKUP_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${DATA_PICKUP_SHEET_NAME}&range=A:Z`; // NEW
         const HISTORY_PALLET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${TRANSACTION_SHEET_NAME}&range=${HISTORY_RANGE}`;
         const FORM_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${FORM_STO_SHEET_NAME}&range=A:Z`;
         
         const STO_REPORT_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STO_SHEET_NAME}&range=A:Z`; 
-        const LOG_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOG_STO_SHEET_NAME}&range=A:Z`; 
+        const LOG_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOG_STO_SHEET_NAME}&range=A:Z`; // NEW
+        
+        // Daftar nama bulan Indonesia (dipakai untuk parsing Timestamp & filter Laporan STO by Scanner)
+        const MONTHS_ID = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
         
         const USERCONTROL_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${USERCONTROL_SHEET_NAME}&range=A:C`;
         const AMBANG_BATAS_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${AMBANG_BATAS_SHEET_NAME}&range=A:C`;
@@ -972,6 +992,9 @@
                     statusMessageEl.textContent = `${data.length} Data Driver Ditemukan`;
 
                     // LOGIC SUMMARY:
+                    // 1. Total Palet Hanwa (Kita ambil dari jumlah total baris atau kolom 'Total Palet' jika ada)
+                    //    User meminta "bagian atas Total Palet Hanwa 307". Kita hitung total baris sebagai default.
+                    //    Jika ada kolom 'TOTAL PALET', kita sum. Jika tidak, count rows.
                     let totalPaletHanwa = 0;
                     const totalColIndex = headers.findIndex(h => h.includes('TOTAL') || h.includes('JUMLAH'));
                     
@@ -987,6 +1010,7 @@
                     }
 
                     // 2. Summary Status OPEN dan CLOSE
+                    // Cari kolom "STATUS PICKUP" atau "STATUS"
                     const statusCol = headers.find(h => h.includes('STATUS'));
                     let countOpen = 0;
                     let countClose = 0;
@@ -999,6 +1023,8 @@
                         });
                     }
 
+                    // Render Cards
+                    // Note: User menyebut angka "307" sebagai contoh Total Palet Hanwa.
                     summaryContainerEl.innerHTML = `
                         ${createSummaryCard(totalPaletHanwa.toLocaleString('id-ID'), 'Total Palet Hanwa', 'text-amber-400')}
                         ${createSummaryCard(countOpen.toLocaleString('id-ID'), 'Status Pickup OPEN', 'text-green-400')}
@@ -1768,7 +1794,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg mb-8">
+                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg">
                         <div class="flex justify-between items-center mb-4 border-b border-zinc-700 pb-2">
                             <h2 class="text-xl font-bold text-green-400">2. Laporan Hasil STO</h2>
                             <div class="flex gap-2">
@@ -1825,10 +1851,7 @@
                         </div>
                     </div>
 
-                    <!-- ========================================== -->
-                    <!-- BAGIAN 3: LAPORAN HASIL STO BY SCANNER     -->
-                    <!-- ========================================== -->
-                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg">
+                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg mt-8">
                         <div class="flex justify-between items-center mb-4 border-b border-zinc-700 pb-2">
                             <h2 class="text-xl font-bold text-green-400">3. Laporan Hasil STO by Scanner</h2>
                             <div class="flex gap-2">
@@ -1844,21 +1867,21 @@
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-zinc-700/50 p-4 rounded-lg">
                             <div>
                                 <label class="block text-xs text-gray-400 mb-1">Bulan</label>
-                                <select id="scannerMonth" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                <select id="scannerReportMonth" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
                                     <option value="">Semua Bulan</option>
                                     ${months.map(m => `<option value="${m}">${m}</option>`).join('')}
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-400 mb-1">Tahun</label>
-                                <select id="scannerYear" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                <select id="scannerReportYear" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
                                     <option value="">Semua Tahun</option>
                                     ${yearOptions.map(y => `<option value="${y.val}">${y.label}</option>`).join('')}
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-400 mb-1">Nama Palet</label>
-                                <select id="scannerPalletName" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                <select id="scannerReportPalletName" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
                                     <option value="">Semua Palet</option>
                                 </select>
                             </div>
@@ -1868,7 +1891,7 @@
                         </div>
 
                         <div class="overflow-x-auto">
-                            <table id="scanner-report-table" class="min-w-full text-sm text-left text-gray-300">
+                            <table id="sto-scanner-report-table" class="min-w-full text-sm text-left text-gray-300">
                                 <thead class="bg-zinc-900 text-xs uppercase text-gray-400">
                                     <tr>
                                         <th class="px-4 py-3">Bulan</th>
@@ -1878,11 +1901,11 @@
                                         <th class="px-4 py-3 text-center text-green-400">Cocok</th>
                                         <th class="px-4 py-3 text-center text-orange-400">Selisih</th>
                                         <th class="px-4 py-3 text-center text-red-400">Tidak Terdaftar</th>
-                                        <th class="px-4 py-3 text-center font-bold text-white">Total (Scan)</th>
-                                        <th class="px-4 py-3 text-center font-bold text-blue-400">Total Sistem</th>
+                                        <th class="px-4 py-3 text-center text-white">Total (Scan)</th>
+                                        <th class="px-4 py-3 text-center text-blue-400">Total Sistem</th>
                                     </tr>
                                 </thead>
-                                <tbody id="scanner-report-body" class="divide-y divide-zinc-700">
+                                <tbody id="sto-scanner-report-body" class="divide-y divide-zinc-700">
                                     <tr><td colspan="9" class="text-center py-4">Silakan pilih filter dan klik Tampilkan Data.</td></tr>
                                 </tbody>
                             </table>
@@ -1899,7 +1922,7 @@
             populateFormSTOFilter(); 
             
             await fetchReportSTOData();
-            await fetchLogSTOData(); // Fetch Data Scanner
+            await fetchLogSTOData();
         }
 
         function populateFormSTOFilter() {
@@ -2145,134 +2168,154 @@
                 downloadLink.click();
             }
         }
-        
-        // --- 3. LAPORAN STO BY SCANNER LOGIC ---
+
+        // ==========================================
+        // --- LAPORAN HASIL STO BY SCANNER (Log Stock Opname) ---
+        // ==========================================
 
         async function fetchLogSTOData() {
             try {
                 const parsedData = await fetchSheetData(LOG_STO_URL);
-                logSTODataRaw = parsedData.data;
-                
-                // Kumpulkan nama palet untuk opsi dropdown (Abaikan yang kosong jika ada)
-                const uniqueNames = [...new Set(logSTODataRaw.map(item => String(item['NAMA PALET'] || '').trim()).filter(n => n))].sort();
-                const nameSelect = document.getElementById('scannerPalletName');
+                logSTOData = parsedData.data;
+                logSTOHeaders = parsedData.headers;
+
+                const uniqueNames = [...new Set(logSTOData.map(item => String(item['NAMA PALET'] || '').trim()).filter(n => n))].sort();
+                const nameSelect = document.getElementById('scannerReportPalletName');
                 if (nameSelect) {
                     nameSelect.innerHTML = '<option value="">Semua Palet</option>' + uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
                 }
             } catch (error) {
-                console.error("Gagal load Log STO:", error);
-                const tbody = document.getElementById('scanner-report-body');
-                if(tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-red-400">Gagal memuat data scanner.</td></tr>`;
+                console.error("Gagal load Log Stock Opname:", error);
+                const tbody = document.getElementById('sto-scanner-report-body');
+                if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-red-400">Gagal memuat data Log Stock Opname.</td></tr>`;
             }
         }
 
+        // Parsing format Timestamp "17/7/2026, 05.55.11" -> { bulan: 'Juli', tahun: '2026' }
+        function parseTimestampBulanTahun(timestampStr) {
+            const str = String(timestampStr || '').trim();
+            if (!str) return { bulan: '', tahun: '' };
+
+            // Ambil bagian tanggal saja (sebelum koma), contoh: "17/7/2026"
+            const datePart = str.split(',')[0].trim();
+            const parts = datePart.split('/');
+            if (parts.length < 3) return { bulan: '', tahun: '' };
+
+            const monthIndex = parseInt(parts[1], 10) - 1;
+            const tahun = parts[2].trim();
+            const bulan = (monthIndex >= 0 && monthIndex < 12) ? MONTHS_ID[monthIndex] : '';
+
+            return { bulan, tahun };
+        }
+
+        // Cari "Total Sistem" dari sheet Ringkasan Stok Palet, dicocokkan dengan Nama Palet & Size
+        function getTotalSistemPalet(namaPalet, size) {
+            if (!stockPalletData || stockPalletData.length === 0 || !stockPalletHeaders) return 0;
+
+            const totalHeader = stockPalletHeaders.find(h => h.toUpperCase().includes('TOTAL'));
+            if (!totalHeader) return 0;
+
+            const match = stockPalletData.find(item =>
+                String(item['NAMA PALET'] || '').trim().toUpperCase() === String(namaPalet).trim().toUpperCase() &&
+                String(item['SIZE'] || '').trim().toUpperCase() === String(size).trim().toUpperCase()
+            );
+
+            if (!match) return 0;
+            const raw = match[totalHeader];
+            const num = parseFloat(String(raw).replace(/[^0-9.,-]/g, '').replace(',', '.'));
+            return isNaN(num) ? 0 : num;
+        }
+
+        // Bangun ringkasan: Group by Bulan + Tahun + Nama Palet + Size, hitung Cocok/Selisih/Tidak Terdaftar/Total
+        function buildScannerReportSummary() {
+            const groups = {};
+
+            logSTOData.forEach(row => {
+                const { bulan, tahun } = parseTimestampBulanTahun(row['TIMESTAMP']);
+                const namaPalet = String(row['NAMA PALET'] || '').trim();
+                const size = String(row['SIZE'] || '').trim();
+                const hasil = String(row['HASIL'] || '').trim();
+
+                if (!bulan || !tahun) return; // Skip baris dengan timestamp tidak valid
+
+                const key = [bulan, tahun, namaPalet, size].join('||');
+                if (!groups[key]) {
+                    groups[key] = {
+                        bulan, tahun, namaPalet, size,
+                        cocok: 0, selisih: 0, tidakTerdaftar: 0
+                    };
+                }
+
+                if (hasil === 'Cocok') groups[key].cocok++;
+                else if (hasil === 'Selisih') groups[key].selisih++;
+                else if (hasil === 'Tidak Terdaftar') groups[key].tidakTerdaftar++;
+            });
+
+            return Object.values(groups).map(g => {
+                const total = g.cocok + g.selisih + g.tidakTerdaftar;
+                const totalSistem = getTotalSistemPalet(g.namaPalet, g.size);
+                return { ...g, total, totalSistem };
+            }).sort((a, b) => {
+                if (a.tahun !== b.tahun) return String(a.tahun).localeCompare(String(b.tahun));
+                if (a.bulan !== b.bulan) return MONTHS_ID.indexOf(a.bulan) - MONTHS_ID.indexOf(b.bulan);
+                return a.namaPalet.localeCompare(b.namaPalet);
+            });
+        }
+
         function filterAndRenderScannerReport() {
-            const month = document.getElementById('scannerMonth').value;
-            const year = document.getElementById('scannerYear').value;
-            const name = document.getElementById('scannerPalletName').value;
-            const tbody = document.getElementById('scanner-report-body');
-            
-            if (!logSTODataRaw || !logSTODataRaw.length) {
+            const month = document.getElementById('scannerReportMonth').value;
+            const year = document.getElementById('scannerReportYear').value;
+            const name = document.getElementById('scannerReportPalletName').value;
+            const tbody = document.getElementById('sto-scanner-report-body');
+
+            if (!logSTOData || logSTOData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Data kosong atau belum termuat.</td></tr>`;
                 return;
             }
 
-            const grouped = {};
-            const monthsList = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            
-            // Cari nama kolom Total di stockPalletData (jika ada)
-            let totalColName = stockPalletHeaders.find(h => String(h).toUpperCase().includes('TOTAL'));
+            scannerReportSummary = buildScannerReportSummary();
 
-            // Proses Agregasi/Ringkasan
-            logSTODataRaw.forEach(row => {
-                const ts = String(row['TIMESTAMP'] || '').trim();
-                let rowMonth = '';
-                let rowYear = '';
-
-                // Parsing Tanggal Format: 17/7/2026, 05.55.11
-                const datePart = ts.split(',')[0].trim(); // Mengambil hanya bagian tanggal "17/7/2026"
-                const tsParts = datePart.split(/[\/\-]/); // Memecah jadi ["17", "7", "2026"]
-                if (tsParts.length === 3) {
-                    rowYear = tsParts[2];
-                    rowMonth = monthsList[parseInt(tsParts[1], 10) - 1] || '';
-                }
-
-                // Handling nilai kosong agar tetap terkelompok rapi
-                const rowName = String(row['NAMA PALET'] || '').trim() || '-';
-                const rowSize = String(row['SIZE'] || '').trim() || '-';
-                const hasil = String(row['HASIL'] || '').trim().toUpperCase();
-
-                const matchMonth = month ? (rowMonth === month) : true;
-                const matchYear = year ? (rowYear === year) : true;
-                
-                // Khusus filter nama, abaikan pengecekan jika dropdown "Semua Palet" terpilih
-                const matchName = name ? (rowName === name) : true;
-                
-                if (matchMonth && matchYear && matchName) {
-                    const key = `${rowMonth}_${rowYear}_${rowName}_${rowSize}`;
-                    
-                    if (!grouped[key]) {
-                        // Ambil Total Sistem dari Ringkasan Stok Palet
-                        let totalSistem = 0;
-                        if (totalColName && stockPalletData && stockPalletData.length > 0 && rowName !== '-') {
-                            const matchStock = stockPalletData.find(s =>
-                                String(s['NAMA PALET'] || '').trim().toUpperCase() === rowName.toUpperCase() &&
-                                String(s['SIZE'] || '').trim().toUpperCase() === rowSize.toUpperCase()
-                            );
-                            if (matchStock) {
-                                // Parsing untuk menghilangkan titik/koma ribuan jika ada
-                                totalSistem = parseFloat(String(matchStock[totalColName]).replace(/[^0-9.,]/g, '').replace(',', '.') || 0);
-                            }
-                        }
-
-                        grouped[key] = {
-                            bulan: rowMonth, tahun: rowYear, nama: rowName, size: rowSize,
-                            cocok: 0, selisih: 0, tidakTerdaftar: 0, totalScan: 0, totalSistem: totalSistem
-                        };
-                    }
-                    
-                    if (hasil === 'COCOK') grouped[key].cocok++;
-                    else if (hasil === 'SELISIH') grouped[key].selisih++;
-                    else if (hasil === 'TIDAK TERDAFTAR') grouped[key].tidakTerdaftar++;
-                    
-                    grouped[key].totalScan++;
-                }
+            const filtered = scannerReportSummary.filter(row => {
+                const matchMonth = month ? (row.bulan === month) : true;
+                const matchYear = year ? (String(row.tahun) === String(year)) : true;
+                const matchName = name ? (row.namaPalet === name) : true;
+                return matchMonth && matchYear && matchName;
             });
 
-            const result = Object.values(grouped);
-
-            if (result.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Tidak ada data sesuai filter.</td></tr>`;
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Tidak ada data sesuai filter. (Coba ubah Bulan/Tahun)</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = result.map(row => `
+            tbody.innerHTML = filtered.map(row => `
                 <tr class="bg-zinc-800 hover:bg-zinc-700 border-b border-zinc-700">
-                    <td class="px-4 py-2 font-medium text-gray-200">${row.bulan || '-'}</td>
-                    <td class="px-4 py-2 text-xs">${row.tahun || '-'}</td>
-                    <td class="px-4 py-2 font-medium text-green-400">${row.nama}</td>
-                    <td class="px-4 py-2 text-xs">${row.size}</td>
+                    <td class="px-4 py-2 text-xs">${row.bulan}</td>
+                    <td class="px-4 py-2 text-xs">${row.tahun}</td>
+                    <td class="px-4 py-2 font-medium text-green-400">${row.namaPalet || '-'}</td>
+                    <td class="px-4 py-2 text-xs">${row.size || '-'}</td>
                     <td class="px-4 py-2 text-center font-bold text-green-400">${row.cocok}</td>
                     <td class="px-4 py-2 text-center font-bold text-orange-400">${row.selisih}</td>
                     <td class="px-4 py-2 text-center font-bold text-red-400">${row.tidakTerdaftar}</td>
-                    <td class="px-4 py-2 text-center font-bold text-white bg-zinc-900">${row.totalScan}</td>
-                    <td class="px-4 py-2 text-center font-bold text-blue-400 bg-zinc-900">${row.totalSistem}</td>
+                    <td class="px-4 py-2 text-center font-bold text-white">${row.total}</td>
+                    <td class="px-4 py-2 text-center font-bold text-blue-400">${row.totalSistem}</td>
                 </tr>
             `).join('');
         }
 
         function exportScannerReport(type) {
-            const tbody = document.getElementById('scanner-report-body');
-            if (!tbody || tbody.rows.length <= 1 && tbody.rows[0].innerText.includes('Silakan')) {
+            const tbody = document.getElementById('sto-scanner-report-body');
+            if (!tbody || (tbody.rows.length <= 1 && tbody.rows[0].innerText.includes('Silakan'))) {
                 alert("Tampilkan data terlebih dahulu.");
                 return;
             }
 
             if (type === 'pdf') {
-                const tableHtml = document.getElementById('scanner-report-table').outerHTML;
+                const tableHtml = document.getElementById('sto-scanner-report-table').outerHTML;
                 const title = `<h2 style="text-align:center; margin-bottom:20px;">Laporan Hasil STO by Scanner</h2>`;
-                const filterInfo = `<p>Periode: ${document.getElementById('scannerMonth').value || 'Semua'} ${document.getElementById('scannerYear').value || 'Semua'}</p>`;
-                
+                const monthVal = document.getElementById('scannerReportMonth').value || 'Semua Bulan';
+                const yearVal = document.getElementById('scannerReportYear').value || 'Semua Tahun';
+                const filterInfo = `<p>Periode: ${monthVal} ${yearVal}</p>`;
+
                 const printArea = document.getElementById('printable-area');
                 printArea.innerHTML = title + filterInfo + tableHtml;
                 printArea.classList.remove('hidden');
@@ -2281,12 +2324,13 @@
 
             } else if (type === 'excel') {
                 let csv = [];
-                const rows = document.querySelectorAll("#scanner-report-table tr");
-                
+                const rows = document.querySelectorAll("#sto-scanner-report-table tr");
+
                 for (let i = 0; i < rows.length; i++) {
                     let row = [], cols = rows[i].querySelectorAll("td, th");
-                    for (let j = 0; j < cols.length; j++) row.push('"' + cols[j].innerText + '"');
-                    csv.push(row.join(","));        
+                    for (let j = 0; j < cols.length; j++)
+                        row.push('"' + cols[j].innerText + '"');
+                    csv.push(row.join(","));
                 }
 
                 const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
@@ -2298,6 +2342,15 @@
                 downloadLink.click();
             }
         }
+        
+        // Expose functions to window
+        window.printForm = printForm;
+        window.exportFormExcel = exportFormExcel; 
+        window.exportReport = exportReport;
+        window.filterAndRenderReport = filterAndRenderReport;
+        window.renderFormSTOFromStockData = renderFormSTOFromStockData;
+        window.filterAndRenderScannerReport = filterAndRenderScannerReport;
+        window.exportScannerReport = exportScannerReport;
 
         // --- 11. HISTORY PALET ---
         const HISTORY_PALET_TITLE = 'History Palet';
@@ -2686,9 +2739,9 @@
             window.filterHistoryTable = filterHistoryTable; 
             window.filterMasterPalletTable = filterMasterPalletTable;
             
-            // Stock Palet Filters 
+            // Stock Palet Filters (NEW)
             window.filterStockPalletTable = filterStockPalletTable;
-            // Data Pickup Filters 
+            // Data Pickup Filters (NEW)
             window.filterDataPickupTable = filterDataPickupTable;
 
             // STO Functions
@@ -2705,8 +2758,6 @@
             window.exportReport = exportReport;
             window.filterAndRenderReport = filterAndRenderReport;
             window.renderFormSTOFromStockData = renderFormSTOFromStockData;
-            
-            // Scanner Report Functions
             window.filterAndRenderScannerReport = filterAndRenderScannerReport;
             window.exportScannerReport = exportScannerReport;
 
