@@ -33,7 +33,6 @@
             color: #9ca3af; /* Warna ikon default (abu-abu terang) */
             transition: color 0.3s ease-in-out;
         }
-        /* Hover effect specific to cards handled inline/utility classes now */
         
         /* Style untuk App View */
         .app-view {
@@ -207,6 +206,7 @@
         let ambangBatasData = []; 
         let formSTOData = []; 
         let reportSTOData = []; 
+        let logSTODataRaw = []; // NEW: Log STO Raw Data
         let criticalStockAlerts = []; 
         
         let isMasterDataFetched = false;
@@ -297,6 +297,7 @@
             dataPickupData = []; // Reset New
             historyPalletData = [];
             ambangBatasData = [];
+            logSTODataRaw = [];
             
             renderApp(page);
         }
@@ -476,6 +477,7 @@
         const TRANSACTION_SHEET_NAME = 'Log Transaksi Palet Batch'; 
         const STO_SHEET_NAME = 'STOCK OPNAME'; 
         const FORM_STO_SHEET_NAME = 'Form STO'; 
+        const LOG_STO_SHEET_NAME = 'Log Stock Opname'; // NEW
         const USERCONTROL_SHEET_NAME = 'Usercontrol';
         const AMBANG_BATAS_SHEET_NAME = 'Ambang Batas'; 
         const RANGE = 'A:H'; 
@@ -488,6 +490,7 @@
         const FORM_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${FORM_STO_SHEET_NAME}&range=A:Z`;
         
         const STO_REPORT_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STO_SHEET_NAME}&range=A:Z`; 
+        const LOG_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOG_STO_SHEET_NAME}&range=A:Z`; // NEW URL
         
         const USERCONTROL_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${USERCONTROL_SHEET_NAME}&range=A:C`;
         const AMBANG_BATAS_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${AMBANG_BATAS_SHEET_NAME}&range=A:C`;
@@ -980,9 +983,6 @@
                     statusMessageEl.textContent = `${data.length} Data Driver Ditemukan`;
 
                     // LOGIC SUMMARY:
-                    // 1. Total Palet Hanwa (Kita ambil dari jumlah total baris atau kolom 'Total Palet' jika ada)
-                    //    User meminta "bagian atas Total Palet Hanwa 307". Kita hitung total baris sebagai default.
-                    //    Jika ada kolom 'TOTAL PALET', kita sum. Jika tidak, count rows.
                     let totalPaletHanwa = 0;
                     const totalColIndex = headers.findIndex(h => h.includes('TOTAL') || h.includes('JUMLAH'));
                     
@@ -998,7 +998,6 @@
                     }
 
                     // 2. Summary Status OPEN dan CLOSE
-                    // Cari kolom "STATUS PICKUP" atau "STATUS"
                     const statusCol = headers.find(h => h.includes('STATUS'));
                     let countOpen = 0;
                     let countClose = 0;
@@ -1011,8 +1010,6 @@
                         });
                     }
 
-                    // Render Cards
-                    // Note: User menyebut angka "307" sebagai contoh Total Palet Hanwa.
                     summaryContainerEl.innerHTML = `
                         ${createSummaryCard(totalPaletHanwa.toLocaleString('id-ID'), 'Total Palet Hanwa', 'text-amber-400')}
                         ${createSummaryCard(countOpen.toLocaleString('id-ID'), 'Status Pickup OPEN', 'text-green-400')}
@@ -1782,7 +1779,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg">
+                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg mb-8">
                         <div class="flex justify-between items-center mb-4 border-b border-zinc-700 pb-2">
                             <h2 class="text-xl font-bold text-green-400">2. Laporan Hasil STO</h2>
                             <div class="flex gap-2">
@@ -1838,6 +1835,69 @@
                             </table>
                         </div>
                     </div>
+
+                    <!-- ========================================== -->
+                    <!-- BAGIAN 3: LAPORAN HASIL STO BY SCANNER     -->
+                    <!-- ========================================== -->
+                    <div class="bg-zinc-800 p-6 rounded-xl shadow-lg">
+                        <div class="flex justify-between items-center mb-4 border-b border-zinc-700 pb-2">
+                            <h2 class="text-xl font-bold text-green-400">3. Laporan Hasil STO by Scanner</h2>
+                            <div class="flex gap-2">
+                                <button onclick="exportScannerReport('pdf')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-sm flex items-center">
+                                    PDF
+                                </button>
+                                <button onclick="exportScannerReport('excel')" class="bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded text-sm flex items-center">
+                                    Excel
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-zinc-700/50 p-4 rounded-lg">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Bulan</label>
+                                <select id="scannerMonth" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                    <option value="">Semua Bulan</option>
+                                    ${months.map(m => `<option value="${m}">${m}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Tahun</label>
+                                <select id="scannerYear" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                    <option value="">Semua Tahun</option>
+                                    ${yearOptions.map(y => `<option value="${y.val}">${y.label}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Nama Palet</label>
+                                <select id="scannerPalletName" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
+                                    <option value="">Semua Palet</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="filterAndRenderScannerReport()" class="w-full bg-green-600 hover:bg-green-500 text-white py-1.5 rounded text-sm font-bold">Tampilkan Data</button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table id="scanner-report-table" class="min-w-full text-sm text-left text-gray-300">
+                                <thead class="bg-zinc-900 text-xs uppercase text-gray-400">
+                                    <tr>
+                                        <th class="px-4 py-3">Bulan</th>
+                                        <th class="px-4 py-3">Tahun</th>
+                                        <th class="px-4 py-3">Nama Palet</th>
+                                        <th class="px-4 py-3">Size</th>
+                                        <th class="px-4 py-3 text-center text-green-400">Cocok</th>
+                                        <th class="px-4 py-3 text-center text-orange-400">Selisih</th>
+                                        <th class="px-4 py-3 text-center text-red-400">Tidak Terdaftar</th>
+                                        <th class="px-4 py-3 text-center font-bold text-white">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scanner-report-body" class="divide-y divide-zinc-700">
+                                    <tr><td colspan="8" class="text-center py-4">Silakan pilih filter dan klik Tampilkan Data.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="printable-area" class="hidden bg-white text-black p-8"></div>
@@ -1849,6 +1909,7 @@
             populateFormSTOFilter(); 
             
             await fetchReportSTOData();
+            await fetchLogSTOData(); // Fetch Data Scanner
         }
 
         function populateFormSTOFilter() {
@@ -2095,12 +2156,138 @@
             }
         }
         
-        // Expose functions to window
-        window.printForm = printForm;
-        window.exportFormExcel = exportFormExcel; 
-        window.exportReport = exportReport;
-        window.filterAndRenderReport = filterAndRenderReport;
-        window.renderFormSTOFromStockData = renderFormSTOFromStockData;
+        // --- 3. LAPORAN STO BY SCANNER LOGIC ---
+
+        async function fetchLogSTOData() {
+            try {
+                const parsedData = await fetchSheetData(LOG_STO_URL);
+                logSTODataRaw = parsedData.data;
+                
+                // Kumpulkan nama palet untuk opsi dropdown
+                const uniqueNames = [...new Set(logSTODataRaw.map(item => String(item['NAMA PALET'] || '').trim()).filter(n => n))].sort();
+                const nameSelect = document.getElementById('scannerPalletName');
+                if (nameSelect) {
+                    nameSelect.innerHTML = '<option value="">Semua Palet</option>' + uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                }
+            } catch (error) {
+                console.error("Gagal load Log STO:", error);
+                const tbody = document.getElementById('scanner-report-body');
+                if(tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-red-400">Gagal memuat data scanner.</td></tr>`;
+            }
+        }
+
+        function filterAndRenderScannerReport() {
+            const month = document.getElementById('scannerMonth').value;
+            const year = document.getElementById('scannerYear').value;
+            const name = document.getElementById('scannerPalletName').value;
+            const tbody = document.getElementById('scanner-report-body');
+            
+            if (!logSTODataRaw || !logSTODataRaw.length) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Data kosong atau belum termuat.</td></tr>`;
+                return;
+            }
+
+            const grouped = {};
+            const monthsList = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+            // Proses Agregasi/Ringkasan
+            logSTODataRaw.forEach(row => {
+                const ts = String(row['TIMESTAMP'] || '').trim();
+                let rowMonth = '';
+                let rowYear = '';
+
+                // Ekstraksi Bulan dan Tahun dari Timestamp (Asumsi format: DD/MM/YYYY atau DD-MM-YYYY)
+                const tsParts = ts.split(' ')[0].split(/[\/\-]/);
+                if (tsParts.length >= 3) {
+                    rowYear = tsParts[2];
+                    rowMonth = monthsList[parseInt(tsParts[1], 10) - 1] || '';
+                }
+
+                // Untuk Hasil "TIDAK TERDAFTAR", pastikan default jika kosong
+                const rowName = String(row['NAMA PALET'] || 'Tidak Diketahui').trim();
+                const rowSize = String(row['SIZE'] || '-').trim();
+                const hasil = String(row['HASIL'] || '').trim().toUpperCase();
+
+                const matchMonth = month ? (rowMonth === month) : true;
+                const matchYear = year ? (rowYear === year) : true;
+                // Khusus filter nama, abaikan pengecekan jika hasil adalah tidak terdaftar dan namanya "Tidak Diketahui"
+                const matchName = name ? (rowName === name) : true;
+                
+                if (matchMonth && matchYear && matchName) {
+                    const key = `${rowMonth}_${rowYear}_${rowName}_${rowSize}`;
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            bulan: rowMonth, tahun: rowYear, nama: rowName, size: rowSize,
+                            cocok: 0, selisih: 0, tidakTerdaftar: 0, total: 0
+                        };
+                    }
+                    
+                    if (hasil === 'COCOK') grouped[key].cocok++;
+                    else if (hasil === 'SELISIH') grouped[key].selisih++;
+                    else if (hasil === 'TIDAK TERDAFTAR') grouped[key].tidakTerdaftar++;
+                    
+                    grouped[key].total++;
+                }
+            });
+
+            const result = Object.values(grouped);
+
+            if (result.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Tidak ada data sesuai filter.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = result.map(row => `
+                <tr class="bg-zinc-800 hover:bg-zinc-700 border-b border-zinc-700">
+                    <td class="px-4 py-2 font-medium text-gray-200">${row.bulan || '-'}</td>
+                    <td class="px-4 py-2 text-xs">${row.tahun || '-'}</td>
+                    <td class="px-4 py-2 font-medium text-green-400">${row.nama}</td>
+                    <td class="px-4 py-2 text-xs">${row.size}</td>
+                    <td class="px-4 py-2 text-center font-bold text-green-400">${row.cocok}</td>
+                    <td class="px-4 py-2 text-center font-bold text-orange-400">${row.selisih}</td>
+                    <td class="px-4 py-2 text-center font-bold text-red-400">${row.tidakTerdaftar}</td>
+                    <td class="px-4 py-2 text-center font-bold text-white bg-zinc-900">${row.total}</td>
+                </tr>
+            `).join('');
+        }
+
+        function exportScannerReport(type) {
+            const tbody = document.getElementById('scanner-report-body');
+            if (!tbody || tbody.rows.length <= 1 && tbody.rows[0].innerText.includes('Silakan')) {
+                alert("Tampilkan data terlebih dahulu.");
+                return;
+            }
+
+            if (type === 'pdf') {
+                const tableHtml = document.getElementById('scanner-report-table').outerHTML;
+                const title = `<h2 style="text-align:center; margin-bottom:20px;">Laporan Hasil STO by Scanner</h2>`;
+                const filterInfo = `<p>Periode: ${document.getElementById('scannerMonth').value || 'Semua'} ${document.getElementById('scannerYear').value || 'Semua'}</p>`;
+                
+                const printArea = document.getElementById('printable-area');
+                printArea.innerHTML = title + filterInfo + tableHtml;
+                printArea.classList.remove('hidden');
+                window.print();
+                printArea.classList.add('hidden');
+
+            } else if (type === 'excel') {
+                let csv = [];
+                const rows = document.querySelectorAll("#scanner-report-table tr");
+                
+                for (let i = 0; i < rows.length; i++) {
+                    let row = [], cols = rows[i].querySelectorAll("td, th");
+                    for (let j = 0; j < cols.length; j++) row.push('"' + cols[j].innerText + '"');
+                    csv.push(row.join(","));        
+                }
+
+                const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+                const downloadLink = document.createElement("a");
+                downloadLink.download = `Report_STO_Scanner_${new Date().toISOString().slice(0,10)}.csv`;
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+            }
+        }
 
         // --- 11. HISTORY PALET ---
         const HISTORY_PALET_TITLE = 'History Palet';
@@ -2508,6 +2695,10 @@
             window.exportReport = exportReport;
             window.filterAndRenderReport = filterAndRenderReport;
             window.renderFormSTOFromStockData = renderFormSTOFromStockData;
+            
+            // Scanner Report Functions
+            window.filterAndRenderScannerReport = filterAndRenderScannerReport;
+            window.exportScannerReport = exportScannerReport;
 
             window.handleLogin = handleLogin;
             window.handleLogout = handleLogout;
