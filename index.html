@@ -1900,6 +1900,9 @@
                                 <button onclick="exportScannerReport('excel')" class="bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded text-sm flex items-center">
                                     Excel
                                 </button>
+                                <button onclick="exportScannerDetail()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm flex items-center">
+                                    Detail
+                                </button>
                             </div>
                         </div>
 
@@ -2217,7 +2220,10 @@
 
         // Urutan kolom TETAP di sheet "Log Stock Opname" (dibuat oleh Apps Script handleStockOpname):
         // 0:Timestamp 1:Username 2:ID Palet 3:Nama Palet 4:Size 5:Status Lama 6:Lokasi Lama 7:Status Baru 8:Lokasi Baru 9:Hasil
-        const LOG_STO_COL = { TIMESTAMP: 0, NAMA_PALET: 3, SIZE: 4, HASIL: 9 };
+        const LOG_STO_COL = {
+            TIMESTAMP: 0, USERNAME: 1, ID_PALET: 2, NAMA_PALET: 3, SIZE: 4,
+            STATUS_LAMA: 5, LOKASI_LAMA: 6, STATUS_BARU: 7, LOKASI_BARU: 8, HASIL: 9
+        };
 
         // Ambil nilai kolom dengan aman: coba pakai nama header hasil deteksi GViz dahulu,
         // kalau kosong/tidak ada fallback ke posisi kolom tetap (karena struktur sheet ini baku).
@@ -2357,6 +2363,76 @@
             }).join('');
         }
 
+        // ==========================================
+        // TOMBOL "DETAIL": Export data MENTAH kolom A-J (sesuai filter Bulan/Tahun/Nama Palet aktif),
+        // persis apa adanya dari sheet "Log Stock Opname" - bukan hasil ringkasan/grouping.
+        // ==========================================
+        function exportScannerDetail() {
+            if (!logSTOScannerData || !logSTOScannerData.length) {
+                alert("Data belum termuat. Silakan tunggu data selesai dimuat, lalu coba lagi.");
+                return;
+            }
+
+            const month = document.getElementById('scannerReportMonth').value;
+            const year = document.getElementById('scannerReportYear').value;
+            const name = document.getElementById('scannerReportPalletName').value;
+
+            // Gunakan filter Bulan/Tahun/Nama Palet yang SAMA PERSIS dengan yang dipakai di tabel ringkasan
+            const filteredRows = logSTOScannerData.filter(row => {
+                const rawTimestamp = getLogSTOField(row, 'TIMESTAMP', LOG_STO_COL.TIMESTAMP);
+                const parsedTs = parseIndoTimestamp(rawTimestamp);
+                const rowMonth = parsedTs ? parsedTs.month : 'Tidak Diketahui';
+                const rowYear = parsedTs ? parsedTs.year : '-';
+                const rowName = String(getLogSTOField(row, 'NAMA PALET', LOG_STO_COL.NAMA_PALET) || '').trim();
+
+                const matchMonth = month ? (rowMonth === month) : true;
+                const matchYear = year ? (rowYear === year) : true;
+                const matchName = name ? (rowName === name) : true;
+
+                return matchMonth && matchYear && matchName;
+            });
+
+            if (filteredRows.length === 0) {
+                alert("Tidak ada data detail sesuai filter yang dipilih.");
+                return;
+            }
+
+            // Header persis kolom A - J di sheet "Log Stock Opname"
+            const headerLabels = [
+                'Timestamp', 'Username', 'ID Palet', 'Nama Palet', 'Size',
+                'Status Lama', 'Lokasi Lama', 'Status Baru', 'Lokasi Baru', 'Hasil'
+            ];
+
+            const csvRows = [headerLabels.map(h => '"' + h + '"').join(',')];
+
+            filteredRows.forEach(row => {
+                const values = [
+                    getLogSTOField(row, 'TIMESTAMP', LOG_STO_COL.TIMESTAMP),
+                    getLogSTOField(row, 'USERNAME', LOG_STO_COL.USERNAME),
+                    getLogSTOField(row, 'ID PALET', LOG_STO_COL.ID_PALET),
+                    getLogSTOField(row, 'NAMA PALET', LOG_STO_COL.NAMA_PALET),
+                    getLogSTOField(row, 'SIZE', LOG_STO_COL.SIZE),
+                    getLogSTOField(row, 'STATUS LAMA', LOG_STO_COL.STATUS_LAMA),
+                    getLogSTOField(row, 'LOKASI LAMA', LOG_STO_COL.LOKASI_LAMA),
+                    getLogSTOField(row, 'STATUS BARU', LOG_STO_COL.STATUS_BARU),
+                    getLogSTOField(row, 'LOKASI BARU', LOG_STO_COL.LOKASI_BARU),
+                    getLogSTOField(row, 'HASIL', LOG_STO_COL.HASIL)
+                ];
+                // Escape tanda kutip ganda agar CSV tetap valid, sisanya apa adanya dari database
+                csvRows.push(values.map(v => '"' + String(v === undefined || v === null ? '' : v).replace(/"/g, '""') + '"').join(','));
+            });
+
+            // Tambahkan BOM UTF-8 agar Excel menampilkan karakter dengan benar
+            const csvFile = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+            const downloadLink = document.createElement("a");
+            downloadLink.download = `Detail_STO_Scanner_${new Date().toISOString().slice(0,10)}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
         function exportScannerReport(type) {
             const tbody = document.getElementById('sto-scanner-report-body');
             if (!tbody || (tbody.rows.length <= 1 && tbody.rows[0].innerText.includes('Silakan'))) {
@@ -2407,6 +2483,7 @@
         window.fetchLogSTOScannerData = fetchLogSTOScannerData;
         window.filterAndRenderScannerReport = filterAndRenderScannerReport;
         window.exportScannerReport = exportScannerReport;
+        window.exportScannerDetail = exportScannerDetail;
 
         // --- 11. HISTORY PALET ---
         const HISTORY_PALET_TITLE = 'History Palet';
@@ -2817,6 +2894,7 @@
             window.fetchLogSTOScannerData = fetchLogSTOScannerData;
             window.filterAndRenderScannerReport = filterAndRenderScannerReport;
             window.exportScannerReport = exportScannerReport;
+            window.exportScannerDetail = exportScannerDetail;
 
             window.handleLogin = handleLogin;
             window.handleLogout = handleLogout;
