@@ -207,9 +207,7 @@
         let ambangBatasData = []; 
         let formSTOData = []; 
         let reportSTOData = []; 
-        let logSTOData = []; // NEW: Log Stock Opname (Scanner)
-        let logSTOHeaders = []; // NEW
-        let scannerReportSummary = []; // NEW: Hasil ringkasan report scanner
+        let logSTOScannerData = []; // NEW: Log Stock Opname (STO by Scanner)
         let criticalStockAlerts = []; 
         
         let isMasterDataFetched = false;
@@ -300,7 +298,6 @@
             dataPickupData = []; // Reset New
             historyPalletData = [];
             ambangBatasData = [];
-            logSTOData = []; // Reset New (Scanner Report)
             
             renderApp(page);
         }
@@ -480,7 +477,7 @@
         const TRANSACTION_SHEET_NAME = 'Log Transaksi Palet Batch'; 
         const STO_SHEET_NAME = 'STOCK OPNAME'; 
         const FORM_STO_SHEET_NAME = 'Form STO'; 
-        const LOG_STO_SHEET_NAME = 'Log Stock Opname'; // NEW: Laporan STO by Scanner
+        const LOG_STO_SCANNER_SHEET_NAME = 'Log Stock Opname'; // NEW - Laporan Hasil STO by Scanner
         const USERCONTROL_SHEET_NAME = 'Usercontrol';
         const AMBANG_BATAS_SHEET_NAME = 'Ambang Batas'; 
         const RANGE = 'A:H'; 
@@ -493,13 +490,7 @@
         const FORM_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${FORM_STO_SHEET_NAME}&range=A:Z`;
         
         const STO_REPORT_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${STO_SHEET_NAME}&range=A:Z`; 
-        const LOG_STO_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOG_STO_SHEET_NAME}&range=A:Z`; // NEW
-        
-        // Daftar nama bulan Indonesia (dipakai untuk parsing Timestamp & filter Laporan STO by Scanner)
-        const MONTHS_ID = [
-            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-        ];
+        const LOG_STO_SCANNER_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${LOG_STO_SCANNER_SHEET_NAME}&range=A:Z`; // NEW
         
         const USERCONTROL_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${USERCONTROL_SHEET_NAME}&range=A:C`;
         const AMBANG_BATAS_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${AMBANG_BATAS_SHEET_NAME}&range=A:C`;
@@ -545,6 +536,33 @@
             return { data: result, headers: columns.map(c => c.label) };
         }
         
+        // --- HELPER: NAMA BULAN INDONESIA (Global, dipakai di beberapa modul report) ---
+        const MONTHS_ID = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+
+        // Parsing timestamp string format Sheet: "17/7/2026, 05.55.11" -> { day, month: 'Juli', year: '2026' }
+        // Dibuat robust terhadap kemungkinan value berupa string ATAU objek Date dari GViz.
+        function parseIndoTimestamp(tsVal) {
+            if (!tsVal) return null;
+            var tsStr = String(tsVal).trim();
+            if (!tsStr) return null;
+
+            // Ambil bagian tanggal saja (sebelum koma), contoh: "17/7/2026"
+            var datePart = tsStr.split(',')[0].trim();
+            var parts = datePart.split('/');
+            if (parts.length < 3) return null;
+
+            var day = parseInt(parts[0], 10);
+            var monthNum = parseInt(parts[1], 10);
+            var year = parseInt(parts[2], 10);
+
+            if (isNaN(monthNum) || isNaN(year) || monthNum < 1 || monthNum > 12) return null;
+
+            return { day: day, month: MONTHS_ID[monthNum - 1], monthNum: monthNum, year: String(year) };
+        }
+
         async function fetchMasterData() {
             if (isMasterDataFetched) return;
             try {
@@ -1764,6 +1782,10 @@
             const yearOptions = [];
             for(let y = currentYear - 2; y <= currentYear + 1; y++) yearOptions.push({val: y, label: y});
 
+            // Range tahun khusus untuk Laporan Hasil STO by Scanner: 2026 - 2036
+            const scannerYearOptions = [];
+            for (let y = 2026; y <= 2036; y++) scannerYearOptions.push(y);
+
             return `
                 <div id="form-report-sto-view" class="app-view p-6 max-w-6xl mx-auto">
                     ${createHeader(FORM_REPORT_STO_TITLE, 'dashboard')}
@@ -1869,14 +1891,14 @@
                                 <label class="block text-xs text-gray-400 mb-1">Bulan</label>
                                 <select id="scannerReportMonth" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
                                     <option value="">Semua Bulan</option>
-                                    ${months.map(m => `<option value="${m}">${m}</option>`).join('')}
+                                    ${MONTHS_ID.map(m => `<option value="${m}">${m}</option>`).join('')}
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-400 mb-1">Tahun</label>
                                 <select id="scannerReportYear" class="w-full bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-sm">
                                     <option value="">Semua Tahun</option>
-                                    ${yearOptions.map(y => `<option value="${y.val}">${y.label}</option>`).join('')}
+                                    ${scannerYearOptions.map(y => `<option value="${y}">${y}</option>`).join('')}
                                 </select>
                             </div>
                             <div>
@@ -1901,7 +1923,7 @@
                                         <th class="px-4 py-3 text-center text-green-400">Cocok</th>
                                         <th class="px-4 py-3 text-center text-orange-400">Selisih</th>
                                         <th class="px-4 py-3 text-center text-red-400">Tidak Terdaftar</th>
-                                        <th class="px-4 py-3 text-center text-white">Total (Scan)</th>
+                                        <th class="px-4 py-3 text-center">Total (Scan)</th>
                                         <th class="px-4 py-3 text-center text-blue-400">Total Sistem</th>
                                     </tr>
                                 </thead>
@@ -1922,7 +1944,7 @@
             populateFormSTOFilter(); 
             
             await fetchReportSTOData();
-            await fetchLogSTOData();
+            await fetchLogSTOScannerData();
         }
 
         function populateFormSTOFilter() {
@@ -2168,98 +2190,52 @@
                 downloadLink.click();
             }
         }
-
+        
         // ==========================================
-        // --- LAPORAN HASIL STO BY SCANNER (Log Stock Opname) ---
+        // --- 11B. LAPORAN HASIL STO BY SCANNER (NEW) ---
+        // Sumber data: Sheet "Log Stock Opname"
+        // Kolom sheet: Timestamp, Username, ID Palet, Nama Palet, Size,
+        //              Status Lama, Lokasi Lama, Status Baru, Lokasi Baru, Hasil
         // ==========================================
 
-        async function fetchLogSTOData() {
+        async function fetchLogSTOScannerData() {
             try {
-                const parsedData = await fetchSheetData(LOG_STO_URL);
-                logSTOData = parsedData.data;
-                logSTOHeaders = parsedData.headers;
+                const parsedData = await fetchSheetData(LOG_STO_SCANNER_URL);
+                logSTOScannerData = parsedData.data;
 
-                const uniqueNames = [...new Set(logSTOData.map(item => String(item['NAMA PALET'] || '').trim()).filter(n => n))].sort();
+                const uniqueNames = [...new Set(
+                    logSTOScannerData.map(item => String(item['NAMA PALET'] || '').trim()).filter(n => n)
+                )].sort();
+
                 const nameSelect = document.getElementById('scannerReportPalletName');
                 if (nameSelect) {
-                    nameSelect.innerHTML = '<option value="">Semua Palet</option>' + uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                    nameSelect.innerHTML = '<option value="">Semua Palet</option>' +
+                        uniqueNames.map(n => `<option value="${n}">${n}</option>`).join('');
                 }
             } catch (error) {
-                console.error("Gagal load Log Stock Opname:", error);
+                console.error("Gagal load Log STO by Scanner:", error);
                 const tbody = document.getElementById('sto-scanner-report-body');
-                if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-red-400">Gagal memuat data Log Stock Opname.</td></tr>`;
+                if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-red-400">Gagal memuat data report scanner.</td></tr>`;
             }
         }
 
-        // Parsing format Timestamp "17/7/2026, 05.55.11" -> { bulan: 'Juli', tahun: '2026' }
-        function parseTimestampBulanTahun(timestampStr) {
-            const str = String(timestampStr || '').trim();
-            if (!str) return { bulan: '', tahun: '' };
-
-            // Ambil bagian tanggal saja (sebelum koma), contoh: "17/7/2026"
-            const datePart = str.split(',')[0].trim();
-            const parts = datePart.split('/');
-            if (parts.length < 3) return { bulan: '', tahun: '' };
-
-            const monthIndex = parseInt(parts[1], 10) - 1;
-            const tahun = parts[2].trim();
-            const bulan = (monthIndex >= 0 && monthIndex < 12) ? MONTHS_ID[monthIndex] : '';
-
-            return { bulan, tahun };
-        }
-
-        // Cari "Total Sistem" dari sheet Ringkasan Stok Palet, dicocokkan dengan Nama Palet & Size
-        function getTotalSistemPalet(namaPalet, size) {
-            if (!stockPalletData || stockPalletData.length === 0 || !stockPalletHeaders) return 0;
-
-            const totalHeader = stockPalletHeaders.find(h => h.toUpperCase().includes('TOTAL'));
-            if (!totalHeader) return 0;
+        // Cari nilai TOTAL di sheet "Ringkasan Stok Palet" berdasarkan Nama Palet & Size
+        function getTotalSistemForPallet(namaPalet, size) {
+            if (!stockPalletData || !stockPalletData.length) return 0;
 
             const match = stockPalletData.find(item =>
-                String(item['NAMA PALET'] || '').trim().toUpperCase() === String(namaPalet).trim().toUpperCase() &&
-                String(item['SIZE'] || '').trim().toUpperCase() === String(size).trim().toUpperCase()
+                String(item['NAMA PALET'] || '').trim().toUpperCase() === String(namaPalet || '').trim().toUpperCase() &&
+                String(item['SIZE'] || '').trim().toUpperCase() === String(size || '').trim().toUpperCase()
             );
-
             if (!match) return 0;
-            const raw = match[totalHeader];
-            const num = parseFloat(String(raw).replace(/[^0-9.,-]/g, '').replace(',', '.'));
-            return isNaN(num) ? 0 : num;
-        }
 
-        // Bangun ringkasan: Group by Bulan + Tahun + Nama Palet + Size, hitung Cocok/Selisih/Tidak Terdaftar/Total
-        function buildScannerReportSummary() {
-            const groups = {};
+            // Cari nama kolom yang mengandung kata "TOTAL" (misal "TOTAL" atau "TOTAL PALET")
+            const totalKey = Object.keys(match).find(k => k.toUpperCase().includes('TOTAL'));
+            if (!totalKey) return 0;
 
-            logSTOData.forEach(row => {
-                const { bulan, tahun } = parseTimestampBulanTahun(row['TIMESTAMP']);
-                const namaPalet = String(row['NAMA PALET'] || '').trim();
-                const size = String(row['SIZE'] || '').trim();
-                const hasil = String(row['HASIL'] || '').trim();
-
-                if (!bulan || !tahun) return; // Skip baris dengan timestamp tidak valid
-
-                const key = [bulan, tahun, namaPalet, size].join('||');
-                if (!groups[key]) {
-                    groups[key] = {
-                        bulan, tahun, namaPalet, size,
-                        cocok: 0, selisih: 0, tidakTerdaftar: 0
-                    };
-                }
-
-                if (hasil === 'Cocok') groups[key].cocok++;
-                else if (hasil === 'Selisih') groups[key].selisih++;
-                else if (hasil === 'Tidak Terdaftar') groups[key].tidakTerdaftar++;
-            });
-
-            return Object.values(groups).map(g => {
-                const total = g.cocok + g.selisih + g.tidakTerdaftar;
-                const totalSistem = getTotalSistemPalet(g.namaPalet, g.size);
-                return { ...g, total, totalSistem };
-            }).sort((a, b) => {
-                if (a.tahun !== b.tahun) return String(a.tahun).localeCompare(String(b.tahun));
-                if (a.bulan !== b.bulan) return MONTHS_ID.indexOf(a.bulan) - MONTHS_ID.indexOf(b.bulan);
-                return a.namaPalet.localeCompare(b.namaPalet);
-            });
+            const rawVal = String(match[totalKey] || '0').replace(/[^0-9.,-]/g, '').replace(',', '.');
+            const val = parseFloat(rawVal);
+            return isNaN(val) ? 0 : val;
         }
 
         function filterAndRenderScannerReport() {
@@ -2268,38 +2244,77 @@
             const name = document.getElementById('scannerReportPalletName').value;
             const tbody = document.getElementById('sto-scanner-report-body');
 
-            if (!logSTOData || logSTOData.length === 0) {
+            if (!logSTOScannerData || !logSTOScannerData.length) {
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Data kosong atau belum termuat.</td></tr>`;
                 return;
             }
 
-            scannerReportSummary = buildScannerReportSummary();
+            // Kelompokkan (ringkas) data per Bulan + Tahun + Nama Palet + Size
+            const groups = {};
 
-            const filtered = scannerReportSummary.filter(row => {
-                const matchMonth = month ? (row.bulan === month) : true;
-                const matchYear = year ? (String(row.tahun) === String(year)) : true;
-                const matchName = name ? (row.namaPalet === name) : true;
-                return matchMonth && matchYear && matchName;
+            logSTOScannerData.forEach(row => {
+                const parsedTs = parseIndoTimestamp(row['TIMESTAMP']);
+                if (!parsedTs) return; // Skip baris dengan timestamp tidak valid
+
+                const rowMonth = parsedTs.month;
+                const rowYear = parsedTs.year;
+                const rowName = String(row['NAMA PALET'] || '').trim();
+                const rowSize = String(row['SIZE'] || '').trim();
+                const rowHasil = String(row['HASIL'] || '').trim();
+
+                const matchMonth = month ? (rowMonth === month) : true;
+                const matchYear = year ? (rowYear === year) : true;
+                const matchName = name ? (rowName === name) : true;
+
+                if (!matchMonth || !matchYear || !matchName) return;
+
+                const key = rowMonth + '||' + rowYear + '||' + rowName + '||' + rowSize;
+                if (!groups[key]) {
+                    groups[key] = {
+                        bulan: rowMonth, tahun: rowYear, nama: rowName, size: rowSize,
+                        cocok: 0, selisih: 0, tidakTerdaftar: 0
+                    };
+                }
+
+                if (rowHasil === 'Cocok') groups[key].cocok++;
+                else if (rowHasil === 'Selisih') groups[key].selisih++;
+                else if (rowHasil === 'Tidak Terdaftar') groups[key].tidakTerdaftar++;
             });
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Tidak ada data sesuai filter. (Coba ubah Bulan/Tahun)</td></tr>`;
+            const groupList = Object.values(groups);
+
+            if (groupList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Tidak ada data sesuai filter. (Coba ubah Bulan/Tahun/Nama Palet)</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = filtered.map(row => `
-                <tr class="bg-zinc-800 hover:bg-zinc-700 border-b border-zinc-700">
-                    <td class="px-4 py-2 text-xs">${row.bulan}</td>
-                    <td class="px-4 py-2 text-xs">${row.tahun}</td>
-                    <td class="px-4 py-2 font-medium text-green-400">${row.namaPalet || '-'}</td>
-                    <td class="px-4 py-2 text-xs">${row.size || '-'}</td>
-                    <td class="px-4 py-2 text-center font-bold text-green-400">${row.cocok}</td>
-                    <td class="px-4 py-2 text-center font-bold text-orange-400">${row.selisih}</td>
-                    <td class="px-4 py-2 text-center font-bold text-red-400">${row.tidakTerdaftar}</td>
-                    <td class="px-4 py-2 text-center font-bold text-white">${row.total}</td>
-                    <td class="px-4 py-2 text-center font-bold text-blue-400">${row.totalSistem}</td>
-                </tr>
-            `).join('');
+            // Urutkan: Tahun terbaru dulu, lalu Bulan, lalu Nama Palet, lalu Size
+            groupList.sort((a, b) => {
+                if (a.tahun !== b.tahun) return b.tahun - a.tahun;
+                const mi = MONTHS_ID.indexOf(a.bulan) - MONTHS_ID.indexOf(b.bulan);
+                if (mi !== 0) return mi;
+                if (a.nama !== b.nama) return a.nama.localeCompare(b.nama);
+                return String(a.size).localeCompare(String(b.size));
+            });
+
+            tbody.innerHTML = groupList.map(g => {
+                const totalScan = g.cocok + g.selisih + g.tidakTerdaftar;
+                const totalSistem = getTotalSistemForPallet(g.nama, g.size);
+
+                return `
+                    <tr class="bg-zinc-800 hover:bg-zinc-700 border-b border-zinc-700">
+                        <td class="px-4 py-2 text-xs">${g.bulan}</td>
+                        <td class="px-4 py-2 text-xs">${g.tahun}</td>
+                        <td class="px-4 py-2 font-medium text-green-400">${g.nama || '-'}</td>
+                        <td class="px-4 py-2 text-xs">${g.size || '-'}</td>
+                        <td class="px-4 py-2 text-center font-bold color-green">${g.cocok}</td>
+                        <td class="px-4 py-2 text-center font-bold color-orange">${g.selisih}</td>
+                        <td class="px-4 py-2 text-center font-bold color-red">${g.tidakTerdaftar}</td>
+                        <td class="px-4 py-2 text-center font-bold text-white">${totalScan}</td>
+                        <td class="px-4 py-2 text-center font-bold text-blue-400">${totalSistem}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function exportScannerReport(type) {
@@ -2312,9 +2327,9 @@
             if (type === 'pdf') {
                 const tableHtml = document.getElementById('sto-scanner-report-table').outerHTML;
                 const title = `<h2 style="text-align:center; margin-bottom:20px;">Laporan Hasil STO by Scanner</h2>`;
-                const monthVal = document.getElementById('scannerReportMonth').value || 'Semua Bulan';
-                const yearVal = document.getElementById('scannerReportYear').value || 'Semua Tahun';
-                const filterInfo = `<p>Periode: ${monthVal} ${yearVal}</p>`;
+                const monthLabel = document.getElementById('scannerReportMonth').value || 'Semua Bulan';
+                const yearLabel = document.getElementById('scannerReportYear').value || 'Semua Tahun';
+                const filterInfo = `<p>Periode: ${monthLabel} ${yearLabel}</p>`;
 
                 const printArea = document.getElementById('printable-area');
                 printArea.innerHTML = title + filterInfo + tableHtml;
@@ -2342,13 +2357,14 @@
                 downloadLink.click();
             }
         }
-        
+
         // Expose functions to window
         window.printForm = printForm;
         window.exportFormExcel = exportFormExcel; 
         window.exportReport = exportReport;
         window.filterAndRenderReport = filterAndRenderReport;
         window.renderFormSTOFromStockData = renderFormSTOFromStockData;
+        window.fetchLogSTOScannerData = fetchLogSTOScannerData;
         window.filterAndRenderScannerReport = filterAndRenderScannerReport;
         window.exportScannerReport = exportScannerReport;
 
@@ -2758,6 +2774,7 @@
             window.exportReport = exportReport;
             window.filterAndRenderReport = filterAndRenderReport;
             window.renderFormSTOFromStockData = renderFormSTOFromStockData;
+            window.fetchLogSTOScannerData = fetchLogSTOScannerData;
             window.filterAndRenderScannerReport = filterAndRenderScannerReport;
             window.exportScannerReport = exportScannerReport;
 
